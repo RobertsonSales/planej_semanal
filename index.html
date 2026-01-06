@@ -139,6 +139,13 @@
             width: 100%;
         }
         
+        .chart-container-pie {
+            position: relative;
+            height: 280px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
         .action-plan-day {
             background-color: #f0f7ff;
             border-radius: 8px;
@@ -159,11 +166,6 @@
         .file-input-area:hover {
             border-color: var(--primary-color);
             background-color: #e9f2ff;
-        }
-        
-        .pdf-section {
-            page-break-inside: avoid;
-            margin-bottom: 20px;
         }
         
         #loadingPdf {
@@ -236,11 +238,6 @@
             padding: 4px 8px;
             margin-top: 4px;
             border-left: 3px solid #1a5fb4;
-        }
-        
-        .pdf-week-section {
-            page-break-inside: avoid;
-            margin-bottom: 15px;
         }
         
         .insights-container {
@@ -446,7 +443,6 @@
             border-right: none;
         }
 
-        /* Horizontal Planning Table Styles */
         .horizontal-planning-table {
             width: 100%;
             border-collapse: collapse;
@@ -521,6 +517,126 @@
             padding: 6px;
             font-size: 0.75em;
         }
+        
+        /* Estilo para insights preditivos */
+        .insight-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #1a5fb4;
+        }
+        
+        .insight-item.predictive {
+            border-left-color: #e5a50a;
+            background-color: #fff8e1;
+        }
+        
+        .insight-item.prescriptive {
+            border-left-color: #26a269;
+            background-color: #e8f5e9;
+        }
+        
+        .insight-icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        .insight-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .insight-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        /* Estilo para botões de visualização no planejamento */
+        .view-details-btn {
+            background-color: #1a5fb4;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .view-details-btn:hover {
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .view-details-btn i {
+            margin-right: 5px;
+        }
+        
+        /* Modal para visualização de detalhes */
+        .planning-modal {
+            max-width: 90%;
+            width: 90%;
+        }
+        
+        .modal-localidade-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #26a269;
+        }
+        
+        /* Ajuste para centralizar o gráfico de pizza */
+        .pie-chart-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        /* Botões de exportação nos modais */
+        .modal-export-btn {
+            background-color: #e01b24;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .modal-export-btn:hover {
+            background-color: #c01019;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-export-btn i {
+            margin-right: 6px;
+        }
+        
+        /* Loading específico para modais */
+        .modal-loading {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body>
@@ -530,14 +646,41 @@
         <h4>Gerando PDF...</h4>
         <p>Aguarde um momento</p>
     </div>
+    
+    <!-- Modal para visualização de detalhes do planejamento -->
+    <div class="modal fade" id="planningDetailModal" tabindex="-1" aria-labelledby="planningDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl planning-modal">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="planningDetailModalLabel">Detalhes do Planejamento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body position-relative" id="planningDetailContent">
+                    <!-- Conteúdo será preenchido dinamicamente -->
+                    <!-- Loading para geração de PDF do modal -->
+                    <div class="modal-loading" id="modalLoadingPdf">
+                        <div class="spinner-border text-primary mb-3" style="width: 2rem; height: 2rem;"></div>
+                        <h5>Gerando PDF...</h5>
+                        <p>Preparando documento para download</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="exportModalPdfBtn">
+                        <i class="bi bi-file-pdf"></i> Exportar para PDF
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container" id="fullContent">
         <!-- Header Section -->
         <div class="header-section">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h1><i class="bi bi-shield-check"></i> Operacao Barricada Zero</h1>
-                    <p class="lead">Analise de dados para planejamento operacional na remocao de barricadas</p>
+                    <h1><i class="bi bi-shield-check"></i> Operação Barricada Zero</h1>
+                    <p class="lead">Análise de dados para planejamento operacional na remoção de barricadas</p>
                 </div>
             </div>
         </div>
@@ -551,7 +694,7 @@
                 <div class="file-input-area mb-3">
                     <i class="bi bi-file-earmark-excel fs-1 text-primary mb-3"></i>
                     <h5>Arraste e solte seu arquivo Excel aqui</h5>
-                    <p class="text-muted">ou clique no botao abaixo para selecionar</p>
+                    <p class="text-muted">ou clique no botão abaixo para selecionar</p>
                     <input type="file" id="fileInput" class="form-control d-none" accept=".xlsx">
                     <button id="selectFileBtn" class="btn btn-custom mt-2">
                         <i class="bi bi-folder2-open"></i> Selecionar Arquivo
@@ -574,19 +717,19 @@
         <div id="planningSection" style="display: none;">
             <div class="card card-custom mb-4">
                 <div class="card-header card-header-custom">
-                    <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Planejamento de Acoes Futuras</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Planejamento de Ações Futuras</h5>
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label for="startDateInput" class="form-label fw-bold">
-                                <i class="bi bi-calendar-date"></i> Data de Inicio das Proximas Acoes:
+                                <i class="bi bi-calendar-date"></i> Data de Início das Próximas Ações:
                             </label>
                             <input type="date" id="startDateInput" class="form-control">
                         </div>
                         <div class="col-md-6">
                             <label for="weeksInput" class="form-label fw-bold">
-                                <i class="bi bi-calendar-week"></i> Numero de Semanas:
+                                <i class="bi bi-calendar-week"></i> Número de Semanas:
                             </label>
                             <select id="weeksInput" class="form-select">
                                 <option value="1">1 semana</option>
@@ -612,8 +755,8 @@
         <div id="pdfSection" class="text-center mt-5" style="display: none;">
             <div class="card card-custom">
                 <div class="card-body">
-                    <h4 class="card-title"><i class="bi bi-file-pdf"></i> Exportar Relatorio</h4>
-                    <p class="text-muted">Gere um relatorio PDF estruturado com todas as analises e planejamentos</p>
+                    <h4 class="card-title"><i class="bi bi-file-pdf"></i> Exportar Relatório</h4>
+                    <p class="text-muted">Gere um relatório PDF estruturado com todas as análises e planejamentos</p>
                     <button id="exportPdfBtn" class="btn btn-custom btn-lg">
                         <i class="bi bi-download"></i> Gerar e Baixar PDF
                     </button>
@@ -626,9 +769,10 @@
     </div>
 
     <script>
-        // Set default date to today
-        document.getElementById('startDateInput').value = new Date().toISOString().split('T')[0];
+        // Configurar data padrão
+        document.getElementById('startDateInput').value = '2026-01-06';
 
+        // Objeto para armazenar todos os dados
         let allData = {
             sortedMunicipios: [],
             sortedLocalidades: [],
@@ -638,53 +782,93 @@
             totalVias: 0,
             totalPeso: 0,
             avgPesoPerRem: 0,
-            insights: '',
             filteredData: [],
             maxDate: null,
             planningData: null,
-            localidadesByMunicipio: {},
-            recentLocalidadesByMunicipio: {},
-            cpaData: {},
-            bpmData: {},
-            cpaByMunicipio: {},
-            bpmByLocalidade: {},
-            recentCPAData: {},
-            recentBPMData: {},
-            metricsByMunicipio: {},
-            bpmToLocalidadesMapping: {},
-            localidadeBPMValidation: {},
             bpmValidationData: {},
-            cpaByLocalidades: {},
-            municipioByLocalidades: {}
+            advancedInsights: []
         };
 
-        // File selection
-        document.getElementById('selectFileBtn').addEventListener('click', function() {
-            document.getElementById('fileInput').click();
+        // Variáveis para controle dos modais
+        let currentModalType = null;
+        let currentModalData = null;
+
+        // Configurar event listeners quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listeners para elementos estáticos
+            document.getElementById('selectFileBtn').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name || 'Nenhum arquivo selecionado';
+                document.getElementById('fileName').textContent = `Arquivo: ${fileName}`;
+            });
+
+            document.getElementById('analyzeBtn').addEventListener('click', function() {
+                const fileInput = document.getElementById('fileInput');
+                if (!fileInput.files.length) {
+                    alert('Por favor, selecione um arquivo Excel.');
+                    return;
+                }
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    processWorkbook(workbook);
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            document.getElementById('generatePlanningBtn').addEventListener('click', generatePlanning);
+            document.getElementById('exportPdfBtn').addEventListener('click', function() {
+                generatePDF(true);
+            });
+            document.getElementById('previewPdfBtn').addEventListener('click', function() {
+                generatePDF(false);
+            });
+
+            // Configurar event listener para o botão de exportação do modal
+            document.getElementById('exportModalPdfBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                exportModalToPDF();
+            });
+
+            // Event delegation para botões dinâmicos
+            document.addEventListener('click', function(e) {
+                // Verificar se o clique foi em um botão de visualização de semana
+                if (e.target && e.target.classList.contains('view-week-details')) {
+                    const weekNum = parseInt(e.target.getAttribute('data-week'));
+                    showWeekDetails(weekNum);
+                    return;
+                }
+                
+                // Verificar se o clique foi em um botão de visualização de dia
+                if (e.target && e.target.classList.contains('view-day-details')) {
+                    const weekNum = parseInt(e.target.getAttribute('data-week'));
+                    const dayNum = parseInt(e.target.getAttribute('data-day'));
+                    const dateStr = e.target.getAttribute('data-date');
+                    showDayDetails(weekNum, dayNum, dateStr);
+                    return;
+                }
+                
+                // Verificar se o clique foi em um botão de resumo de CPA
+                if (e.target && e.target.classList.contains('view-cpa-summary')) {
+                    showCPASummary();
+                    return;
+                }
+                
+                // Verificar se o clique foi em um botão de resumo de município
+                if (e.target && e.target.classList.contains('view-municipio-summary')) {
+                    showMunicipioSummary();
+                    return;
+                }
+            });
         });
 
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Nenhum arquivo selecionado';
-            document.getElementById('fileName').textContent = `Arquivo: ${fileName}`;
-        });
-
-        document.getElementById('analyzeBtn').addEventListener('click', function() {
-            const fileInput = document.getElementById('fileInput');
-            if (!fileInput.files.length) {
-                alert('Por favor, selecione um arquivo Excel.');
-                return;
-            }
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = e.target.result;
-                const workbook = XLSX.read(data, { type: 'array' });
-                processWorkbook(workbook);
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        // Funcao para conversao de datas Excel
+        // Funções auxiliares
         function excelDateToJSDateSimple(serial) {
             const excelEpoch = new Date(1899, 11, 30);
             const days = Math.floor(serial);
@@ -700,7 +884,7 @@
         }
 
         function formatDate(date) {
-            if (!(date instanceof Date) || isNaN(date)) return 'Data invalida';
+            if (!(date instanceof Date) || isNaN(date)) return 'Data inválida';
             return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
@@ -735,11 +919,10 @@
         }
 
         function getDayNameFull(dayIndex) {
-            const days = ['Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira'];
+            const days = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira'];
             return days[dayIndex] || '';
         }
 
-        // Funcao para normalizar nomes
         function normalizeText(text) {
             if (!text) return '';
             return text.toString()
@@ -749,9 +932,8 @@
                 .trim();
         }
 
-        // Verificar se um BPM atua em uma localidade especifica
         function isBPMValidForLocalidade(bpmName, localidadeNome, bairro, municipioNome, bpmValidationData) {
-            if (!bpmName || bpmName === 'Nao informado' || (!localidadeNome && !bairro)) {
+            if (!bpmName || bpmName === 'Não informado' || (!localidadeNome && !bairro)) {
                 return false;
             }
             
@@ -781,7 +963,111 @@
             
             return false;
         }
+        
+        // Gerar insights preditivos e prescritivos
+        function generateAdvancedInsights(data) {
+            const insights = [];
+            
+            // Insight baseado na média de peso por remoção
+            if (data.avgPesoPerRem > 15) {
+                insights.push({
+                    type: 'predictive',
+                    title: 'Alerta de Barricadas Pesadas',
+                    description: `A média de ${data.avgPesoPerRem.toFixed(2)} toneladas por remoção indica presença de barricadas robustas. Planeje equipes e equipamentos adequados para manuseio de cargas pesadas.`,
+                    icon: 'bi-exclamation-triangle'
+                });
+            } else if (data.avgPesoPerRem > 8) {
+                insights.push({
+                    type: 'predictive',
+                    title: 'Barricadas de Porte Moderado',
+                    description: `Média de ${data.avgPesoPerRem.toFixed(2)} toneladas sugere barricadas de tamanho médio. Equipes padrão são suficientes, mas considere reforço para locais críticos.`,
+                    icon: 'bi-speedometer2'
+                });
+            } else {
+                insights.push({
+                    type: 'predictive',
+                    title: 'Barricadas Leves Predominantes',
+                    description: `Média de ${data.avgPesoPerRem.toFixed(2)} toneladas indica barricadas menores. Operações podem ser mais ágeis com menor necessidade de equipamentos pesados.`,
+                    icon: 'bi-check-circle'
+                });
+            }
+            
+            // Insight baseado na distribuição temporal
+            if (data.filteredData.length > 0) {
+                const dates = data.filteredData.map(row => row.DATA);
+                const recentDate = new Date(Math.max(...dates));
+                const now = new Date();
+                const daysSinceLast = Math.floor((now - recentDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysSinceLast > 30) {
+                    insights.push({
+                        type: 'predictive',
+                        title: 'Possível Acúmulo Recente',
+                        description: `Última operação registrada há ${daysSinceLast} dias. Pode haver acúmulo significativo de barricadas desde então. Priorize áreas com histórico de recorrência rápida.`,
+                        icon: 'bi-clock-history'
+                    });
+                }
+            }
+            
+            // Insight baseado no top municípios
+            if (data.sortedMunicipios.length > 0) {
+                const topMun = data.sortedMunicipios[0];
+                insights.push({
+                    type: 'prescriptive',
+                    title: 'Foco Estratégico Recomendado',
+                    description: `${topMun.MUNICIPIO} lidera com ${topMun.REMOCOES} remoções. Recomenda-se alocar 30% dos recursos para este município, com atenção especial para áreas periféricas.`,
+                    icon: 'bi-geo-alt'
+                });
+            }
+            
+            // Insight baseado na eficiência
+            const efficiency = data.totalVias / (data.totalRem || 1);
+            if (efficiency > 1.5) {
+                insights.push({
+                    type: 'prescriptive',
+                    title: 'Alta Eficiência de Vias Liberadas',
+                    description: `Relação de ${efficiency.toFixed(2)} vias por remoção. Mantenha a estratégia atual e replique para outras regiões.`,
+                    icon: 'bi-graph-up-arrow'
+                });
+            } else if (efficiency < 0.8) {
+                insights.push({
+                    type: 'prescriptive',
+                    title: 'Oportunidade de Otimização',
+                    description: `Relação de ${efficiency.toFixed(2)} vias por remoção. Considere estratégias de remoção em bloco para liberar mais vias por operação.`,
+                    icon: 'bi-tools'
+                });
+            }
+            
+            // Insight baseado na sazonalidade
+            const currentMonth = new Date().getMonth();
+            if (currentMonth >= 10 || currentMonth <= 2) {
+                insights.push({
+                    type: 'predictive',
+                    title: 'Período de Alta Ocorrência',
+                    description: 'Estamos no período de fim/começo de ano, historicamente com maior incidência de barricadas. Aumente patrulhamento preventivo em 25%.',
+                    icon: 'bi-calendar-event'
+                });
+            }
+            
+            // Insight baseado na distribuição geográfica
+            if (data.sortedMunicipios.length >= 5) {
+                const top5Total = data.sortedMunicipios.slice(0, 5).reduce((sum, mun) => sum + mun.REMOCOES, 0);
+                const percentageTop5 = (top5Total / data.totalRem) * 100;
+                
+                if (percentageTop5 > 70) {
+                    insights.push({
+                        type: 'prescriptive',
+                        title: 'Concentração Geográfica Alta',
+                        description: `Os 5 principais municípios concentram ${percentageTop5.toFixed(1)}% das remoções. Foque recursos nestas regiões para impacto máximo.`,
+                        icon: 'bi-pie-chart'
+                    });
+                }
+            }
+            
+            return insights;
+        }
 
+        // Processar arquivo Excel
         function processWorkbook(workbook) {
             // 1. Processar a aba CPA x BTL
             const cpaBtlSheet = workbook.Sheets['CPA x BTL'];
@@ -801,13 +1087,13 @@
                     
                     for (let i = 0; i < headerRow.length; i++) {
                         const cellValue = headerRow[i].toString().toLowerCase();
-                        if (cellValue.includes('bpm') || cellValue.includes('batalhao') || cellValue.includes('batalhao')) {
+                        if (cellValue.includes('bpm') || cellValue.includes('batalhao') || cellValue.includes('batalhão')) {
                             bpmColumnIndex = i;
                         }
-                        if (cellValue.includes('municipio') || cellValue.includes('municipio') || 
-                            cellValue.includes('atuacao') || cellValue.includes('atuacao') ||
+                        if (cellValue.includes('município') || cellValue.includes('municipio') || 
+                            cellValue.includes('atuacao') || cellValue.includes('atuação') ||
                             cellValue.includes('bairro') || cellValue.includes('localidade') ||
-                            cellValue.includes('area') || cellValue.includes('area')) {
+                            cellValue.includes('area') || cellValue.includes('área')) {
                             areasAtuacaoColumnIndex = i;
                         }
                     }
@@ -844,7 +1130,7 @@
             // 2. Processar a aba GLOBAL
             const globalSheet = workbook.Sheets['GLOBAL'];
             if (!globalSheet) {
-                alert('Aba GLOBAL nao encontrada.');
+                alert('Aba GLOBAL não encontrada.');
                 return;
             }
 
@@ -860,7 +1146,7 @@
                     if (typeof row.DATA === 'number') {
                         row.DATA = excelDateToJSDateSimple(row.DATA);
                     } else if (row.DATA instanceof Date) {
-                        // Ja e uma data
+                        // Já é uma data
                     } else {
                         row.DATA = new Date(row.DATA);
                     }
@@ -873,10 +1159,10 @@
                     row.REMOCOES = parseFloat(row.REMOCOES) || 0;
                     row.VIAS = parseFloat(row.VIAS) || 0;
                     row.PESO_TON = parseFloat(row.PESO_TON) || 0;
-                    row.CPA = row.CPA || 'Nao informado';
-                    row.BPM = row.BPM || 'Nao informado';
+                    row.CPA = row.CPA || 'Não informado';
+                    row.BPM = row.BPM || 'Não informado';
                     
-                    row.LOCALIDADE_ID = row.LOCALIDADE || row.BAIRRO || 'Area nao especificada';
+                    row.LOCALIDADE_ID = row.LOCALIDADE || row.BAIRRO || 'Área não especificada';
                     row.LOCALIDADE_FULL = `${row.MUNICIPIO || 'Desconhecido'} / ${row.LOCALIDADE_ID}`;
                     
                     row.NORMALIZED_LOCALIDADE = normalizeText(row.LOCALIDADE_ID);
@@ -884,540 +1170,159 @@
                     row.NORMALIZED_MUNICIPIO = normalizeText(row.MUNICIPIO);
                     row.NORMALIZED_BPM = normalizeText(row.BPM);
                 } catch (error) {
-                    console.error('Erro ao processar linha:', row, error);
-                    row.DATA = new Date();
-                    row.FORMATTED_DATA = formatDate(row.DATA);
-                    row.REMOCOES = parseFloat(row.REMOCOES) || 0;
-                    row.VIAS = parseFloat(row.VIAS) || 0;
-                    row.PESO_TON = parseFloat(row.PESO_TON) || 0;
-                    row.CPA = row.CPA || 'Nao informado';
-                    row.BPM = row.BPM || 'Nao informado';
-                    row.LOCALIDADE_ID = row.LOCALIDADE || row.BAIRRO || 'Area nao especificada';
-                    row.LOCALIDADE_FULL = `${row.MUNICIPIO || 'Desconhecido'} / ${row.LOCALIDADE_ID}`;
-                    row.NORMALIZED_LOCALIDADE = normalizeText(row.LOCALIDADE_ID);
-                    row.NORMALIZED_BAIRro = normalizeText(row.BAIRRO);
-                    row.NORMALIZED_MUNICIPIO = normalizeText(row.MUNICIPIO);
-                    row.NORMALIZED_BPM = normalizeText(row.BPM);
+                    console.error('Erro ao processar linha:', error);
                 }
             });
 
-            // Calculate metrics
-            const metricsByMunicipio = {};
-            const metricsByLocalidade = {};
-            
-            allData.localidadesByMunicipio = {};
-            allData.metricsByMunicipio = {};
-            allData.cpaData = {};
-            allData.bpmData = {};
-            allData.cpaByMunicipio = {};
-            allData.bpmByLocalidade = {};
-            allData.localidadeBPMValidation = {};
-            allData.bpmToLocalidadesMapping = {};
-            allData.cpaByLocalidades = {};
-            allData.municipioByLocalidades = {};
-            
+            // Calcula a data máxima
+            allData.maxDate = allData.filteredData.reduce((max, row) => row.DATA > max ? row.DATA : max, new Date(0));
+
+            // Agrupa por localidade e município, mantendo o mais recente
             allData.filteredData.forEach(row => {
-                const mun = row.MUNICIPIO || 'Desconhecido';
-                const locId = row.LOCALIDADE_ID;
-                const locFull = row.LOCALIDADE_FULL;
-                const bairro = row.BAIRRO;
-                const cpa = row.CPA;
-                const bpm = row.BPM;
-                
-                const isBPMValid = isBPMValidForLocalidade(
-                    bpm, 
-                    row.LOCALIDADE, 
-                    bairro, 
-                    mun, 
-                    allData.bpmValidationData
-                );
-                
-                if (!metricsByMunicipio[mun]) {
-                    metricsByMunicipio[mun] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0,
-                        localidades: new Set(),
-                        todasLocalidades: []
-                    };
+                const locKey = row.NORMALIZED_LOCALIDADE + '_' + row.NORMALIZED_MUNICIPIO;
+                if (!allData.recentByLocalidade[locKey] || row.DATA > allData.recentByLocalidade[locKey].DATA) {
+                    allData.recentByLocalidade[locKey] = row;
                 }
-                metricsByMunicipio[mun].rem += row.REMOCOES;
-                metricsByMunicipio[mun].vias += row.VIAS;
-                metricsByMunicipio[mun].peso += row.PESO_TON;
-                metricsByMunicipio[mun].localidades.add(locId);
                 
-                if (!metricsByLocalidade[locFull]) {
-                    metricsByLocalidade[locFull] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0, 
-                        municipio: mun,
-                        bairro: bairro,
-                        validBPMs: new Set(),
-                        allBPMs: new Set(),
-                        isValidForPlanning: false,
-                        cpa: cpa
-                    };
-                }
-                metricsByLocalidade[locFull].rem += row.REMOCOES;
-                metricsByLocalidade[locFull].vias += row.VIAS;
-                metricsByLocalidade[locFull].peso += row.PESO_TON;
-                metricsByLocalidade[locFull].allBPMs.add(bpm);
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    metricsByLocalidade[locFull].validBPMs.add(bpm);
-                    metricsByLocalidade[locFull].isValidForPlanning = true;
+                const munKey = row.NORMALIZED_MUNICIPIO;
+                if (!allData.recentByMunicipio[munKey] || row.DATA > allData.recentByMunicipio[munKey].DATA) {
+                    allData.recentByMunicipio[munKey] = row;
                 }
 
-                if (!allData.localidadesByMunicipio[mun]) {
-                    allData.localidadesByMunicipio[mun] = {};
-                }
-                if (!allData.localidadesByMunicipio[mun][locFull]) {
-                    allData.localidadesByMunicipio[mun][locFull] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0,
-                        bairro: bairro,
-                        validBPMs: new Set(),
-                        allBPMs: new Set(),
-                        cpa: cpa
-                    };
-                }
-                allData.localidadesByMunicipio[mun][locFull].rem += row.REMOCOES;
-                allData.localidadesByMunicipio[mun][locFull].vias += row.VIAS;
-                allData.localidadesByMunicipio[mun][locFull].peso += row.PESO_TON;
-                allData.localidadesByMunicipio[mun][locFull].allBPMs.add(bpm);
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    allData.localidadesByMunicipio[mun][locFull].validBPMs.add(bpm);
-                }
-                
-                if (!allData.metricsByMunicipio[mun]) {
-                    allData.metricsByMunicipio[mun] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0,
-                        localidades: new Set(),
-                        cpas: new Set(),
-                        bpms: new Set()
-                    };
-                }
-                allData.metricsByMunicipio[mun].rem += row.REMOCOES;
-                allData.metricsByMunicipio[mun].vias += row.VIAS;
-                allData.metricsByMunicipio[mun].peso += row.PESO_TON;
-                allData.metricsByMunicipio[mun].localidades.add(locId);
-                allData.metricsByMunicipio[mun].cpas.add(cpa);
-                allData.metricsByMunicipio[mun].bpms.add(bpm);
-
-                if (!allData.cpaData[cpa]) {
-                    allData.cpaData[cpa] = { rem: 0, municipios: new Set(), localidades: new Set() };
-                }
-                allData.cpaData[cpa].rem += row.REMOCOES;
-                allData.cpaData[cpa].municipios.add(mun);
-                allData.cpaData[cpa].localidades.add(locFull);
-
-                if (!allData.bpmData[bpm]) {
-                    allData.bpmData[bpm] = { 
-                        rem: 0, 
-                        municipios: new Set(), 
-                        localidades: new Set(), 
-                        isValid: false 
-                    };
-                }
-                allData.bpmData[bpm].rem += row.REMOCOES;
-                allData.bpmData[bpm].municipios.add(mun);
-                allData.bpmData[bpm].localidades.add(locFull);
-                allData.bpmData[bpm].isValid = isBPMValid;
-
-                if (!allData.cpaByMunicipio[mun]) {
-                    allData.cpaByMunicipio[mun] = {};
-                }
-                if (!allData.cpaByMunicipio[mun][cpa]) {
-                    allData.cpaByMunicipio[mun][cpa] = 0;
-                }
-                allData.cpaByMunicipio[mun][cpa] += row.REMOCOES;
-
-                if (!allData.bpmByLocalidade[locFull]) {
-                    allData.bpmByLocalidade[locFull] = {};
-                }
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    if (!allData.bpmByLocalidade[locFull][bpm]) {
-                        allData.bpmByLocalidade[locFull][bpm] = 0;
-                    }
-                    allData.bpmByLocalidade[locFull][bpm] += row.REMOCOES;
-                    
-                    if (!allData.bpmToLocalidadesMapping[bpm]) {
-                        allData.bpmToLocalidadesMapping[bpm] = new Set();
-                    }
-                    allData.bpmToLocalidadesMapping[bpm].add(locFull);
-                }
-                
-                if (!allData.localidadeBPMValidation[locFull]) {
-                    allData.localidadeBPMValidation[locFull] = {
-                        validBPMs: new Set(),
-                        allBPMs: new Set(),
-                        municipio: mun,
-                        bairro: bairro,
-                        cpa: cpa
-                    };
-                }
-                allData.localidadeBPMValidation[locFull].allBPMs.add(bpm);
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    allData.localidadeBPMValidation[locFull].validBPMs.add(bpm);
-                }
-                
-                // Estrutura para agrupamento por CPA
-                if (!allData.cpaByLocalidades[cpa]) {
-                    allData.cpaByLocalidades[cpa] = [];
-                }
-                if (!allData.cpaByLocalidades[cpa].includes(locFull)) {
-                    allData.cpaByLocalidades[cpa].push(locFull);
-                }
-                
-                // Estrutura para agrupamento por Municipio
-                if (!allData.municipioByLocalidades[mun]) {
-                    allData.municipioByLocalidades[mun] = [];
-                }
-                if (!allData.municipioByLocalidades[mun].includes(locFull)) {
-                    allData.municipioByLocalidades[mun].push(locFull);
-                }
+                allData.totalRem += row.REMOCOES;
+                allData.totalVias += row.VIAS;
+                allData.totalPeso += row.PESO_TON;
             });
 
-            allData.sortedMunicipios = Object.entries(metricsByMunicipio)
-                .sort((a, b) => b[1].rem - a[1].rem);
-            
-            allData.sortedLocalidades = Object.entries(metricsByLocalidade)
-                .sort((a, b) => b[1].rem - a[1].rem);
+            allData.avgPesoPerRem = allData.totalRem > 0 ? allData.totalPeso / allData.totalRem : 0;
 
-            // Recent metrics (last 7 days)
-            allData.maxDate = new Date(Math.max(...allData.filteredData.map(row => row.DATA)));
-            const sevenDaysAgo = new Date(allData.maxDate);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            sevenDaysAgo.setHours(0, 0, 0, 0);
-            
-            const recentData = allData.filteredData.filter(row => {
-                const rowDate = new Date(row.DATA);
-                rowDate.setHours(0, 0, 0, 0);
-                return rowDate >= sevenDaysAgo;
-            });
+            // Ordena localidades e municípios
+            allData.sortedLocalidades = Object.values(allData.recentByLocalidade).sort((a, b) => b.REMOCOES - a.REMOCOES);
+            allData.sortedMunicipios = Object.values(allData.recentByMunicipio).sort((a, b) => b.REMOCOES - a.REMOCOES);
 
-            allData.recentByMunicipio = {};
-            allData.recentByLocalidade = {};
-            allData.recentLocalidadesByMunicipio = {};
-            allData.recentCPAData = {};
-            allData.recentBPMData = {};
-            
-            recentData.forEach(row => {
-                const mun = row.MUNICIPIO || 'Desconhecido';
-                const locId = row.LOCALIDADE_ID;
-                const locFull = row.LOCALIDADE_FULL;
-                const bairro = row.BAIRRO;
-                const cpa = row.CPA;
-                const bpm = row.BPM;
-                
-                const isBPMValid = isBPMValidForLocalidade(
-                    bpm, 
-                    row.LOCALIDADE, 
-                    bairro, 
-                    mun, 
-                    allData.bpmValidationData
-                );
-                
-                if (!allData.recentByMunicipio[mun]) {
-                    allData.recentByMunicipio[mun] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0,
-                        localidades: new Set()
-                    };
-                }
-                allData.recentByMunicipio[mun].rem += row.REMOCOES;
-                allData.recentByMunicipio[mun].vias += row.VIAS;
-                allData.recentByMunicipio[mun].peso += row.PESO_TON;
-                allData.recentByMunicipio[mun].localidades.add(locFull);
+            // Gera insights avançados
+            const advancedInsights = generateAdvancedInsights(allData);
+            allData.advancedInsights = advancedInsights;
 
-                if (!allData.recentByLocalidade[locFull]) {
-                    allData.recentByLocalidade[locFull] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0,
-                        municipio: mun,
-                        bairro: bairro,
-                        validBPMs: new Set(),
-                        allBPMs: new Set(),
-                        isValidForPlanning: false,
-                        cpa: cpa
-                    };
-                }
-                allData.recentByLocalidade[locFull].rem += row.REMOCOES;
-                allData.recentByLocalidade[locFull].vias += row.VIAS;
-                allData.recentByLocalidade[locFull].peso += row.PESO_TON;
-                allData.recentByLocalidade[locFull].allBPMs.add(bpm);
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    allData.recentByLocalidade[locFull].validBPMs.add(bpm);
-                    allData.recentByLocalidade[locFull].isValidForPlanning = true;
-                }
-                
-                if (!allData.recentLocalidadesByMunicipio[mun]) {
-                    allData.recentLocalidadesByMunicipio[mun] = {};
-                }
-                if (!allData.recentLocalidadesByMunicipio[mun][locFull]) {
-                    allData.recentLocalidadesByMunicipio[mun][locFull] = { 
-                        rem: 0, 
-                        vias: 0, 
-                        peso: 0,
-                        bairro: bairro,
-                        validBPMs: new Set(),
-                        allBPMs: new Set()
-                    };
-                }
-                allData.recentLocalidadesByMunicipio[mun][locFull].rem += row.REMOCOES;
-                allData.recentLocalidadesByMunicipio[mun][locFull].vias += row.VIAS;
-                allData.recentLocalidadesByMunicipio[mun][locFull].peso += row.PESO_TON;
-                allData.recentLocalidadesByMunicipio[mun][locFull].allBPMs.add(bpm);
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    allData.recentLocalidadesByMunicipio[mun][locFull].validBPMs.add(bpm);
-                }
-
-                if (!allData.recentCPAData[cpa]) {
-                    allData.recentCPAData[cpa] = { rem: 0, municipios: new Set(), localidades: new Set() };
-                }
-                allData.recentCPAData[cpa].rem += row.REMOCOES;
-                allData.recentCPAData[cpa].municipios.add(mun);
-                allData.recentCPAData[cpa].localidades.add(locFull);
-
-                if (isBPMValid && bpm !== 'Nao informado') {
-                    if (!allData.recentBPMData[bpm]) {
-                        allData.recentBPMData[bpm] = { 
-                            rem: 0, 
-                            municipios: new Set(), 
-                            localidades: new Set(), 
-                            isValid: true 
-                        };
-                    }
-                    allData.recentBPMData[bpm].rem += row.REMOCOES;
-                    allData.recentBPMData[bpm].municipios.add(mun);
-                    allData.recentBPMData[bpm].localidades.add(locFull);
-                }
-            });
-
-            // Calculate totals
-            allData.totalRem = allData.filteredData.reduce((sum, row) => sum + row.REMOCOES, 0);
-            allData.totalVias = allData.filteredData.reduce((sum, row) => sum + row.VIAS, 0);
-            allData.totalPeso = allData.filteredData.reduce((sum, row) => sum + row.PESO_TON, 0);
-            allData.avgPesoPerRem = allData.totalRem > 0 ? (allData.totalPeso / allData.totalRem).toFixed(2) : 0;
-
-            // Generate insights
-            generateInsights();
-
-            // Render analysis
-            renderAnalysis();
-            renderCharts();
-
-            // Show planning section
-            document.getElementById('planningSection').style.display = 'block';
-            document.getElementById('pdfSection').style.display = 'block';
-        }
-
-        function generateInsights() {
-            let insights = '';
-            
-            const localidadesComBPMValido = Object.values(allData.localidadeBPMValidation)
-                .filter(loc => loc.validBPMs && loc.validBPMs.size > 0)
-                .length;
-            
-            const totalLocalidades = Object.keys(allData.localidadeBPMValidation).length;
-            
-            insights += `
-                <div class="insight-card p-3 mb-3">
-                    <h6><i class="bi bi-shield-check text-success"></i> Validacao de BPMs por Localidade</h6>
-                    <p class="mb-1">${localidadesComBPMValido} de ${totalLocalidades} localidades tem BPMs validados para atuacao</p>
-                    <small class="text-muted">BPMs sao associados especificamente a cada localidade, permitindo multiplos BPMs por municipio</small>
-                </div>`;
-            
-            if (allData.sortedMunicipios.length > 0) {
-                const topMun = allData.sortedMunicipios[0][0];
-                const topMunData = allData.sortedMunicipios[0][1];
-                
-                let localidadesComBPMValidoNoMunicipio = 0;
-                if (allData.localidadesByMunicipio[topMun]) {
-                    Object.values(allData.localidadesByMunicipio[topMun]).forEach(loc => {
-                        if (loc.validBPMs && loc.validBPMs.size > 0) {
-                            localidadesComBPMValidoNoMunicipio++;
-                        }
-                    });
-                }
-                
-                insights += `
-                    <div class="insight-card p-3 mb-3">
-                        <h6><i class="bi bi-exclamation-triangle-fill text-warning"></i> Prioridade Maxima: ${topMun}</h6>
-                        <p class="mb-1">${topMunData.rem} remocoes | ${topMunData.peso.toFixed(1)} ton | ${topMunData.localidades.size} localidades</p>
-                        <p class="mb-1"><i class="bi bi-shield-check"></i> ${localidadesComBPMValidoNoMunicipio} localidades com BPMs validados</p>
-                        <small class="text-muted">Recomendacao: Coordenar acoes com os BPMs especificos de cada localidade</small>
-                    </div>`;
-            }
-
-            if (allData.sortedLocalidades.length > 0) {
-                const topLocEntry = allData.sortedLocalidades[0];
-                const topLoc = topLocEntry[0];
-                const topLocData = topLocEntry[1];
-                const validBPMsCount = topLocData.validBPMs ? topLocData.validBPMs.size : 0;
-                const bpmList = topLocData.validBPMs ? Array.from(topLocData.validBPMs).join(', ') : 'Nenhum';
-                
-                insights += `
-                    <div class="insight-card p-3 mb-3">
-                        <h6><i class="bi bi-geo-alt-fill text-danger"></i> Focal Point: ${topLoc}</h6>
-                        <p class="mb-1">${topLocData.rem} remocoes | ${topLocData.peso.toFixed(1)} ton | ${topLocData.vias} vias</p>
-                        <p class="mb-1"><i class="bi bi-shield-check"></i> BPMs validados: ${validBPMsCount} (${bpmList})</p>
-                        <small class="text-muted">Recomendacao: Implementar operacao especial com os BPMs especificos desta localidade</small>
-                    </div>`;
-            }
-
-            allData.insights = insights;
-        }
-
-        function renderAnalysis() {
-            let html = '';
-            
-            // Summary Cards
-            html += `
-                <div class="col-12 mb-4">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="card card-custom h-100">
-                                <div class="card-body stat-card">
-                                    <div class="stat-value">${allData.totalRem.toLocaleString()}</div>
-                                    <div class="stat-label">Total de Remocoes</div>
-                                </div>
-                            </div>
+            // Exibe análise
+            let analysisHtml = `
+                <div class="col-md-3">
+                    <div class="stat-card priority-high">
+                        <div class="stat-value">${allData.totalRem}</div>
+                        <div class="stat-label">Remoções Totais</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card priority-medium">
+                        <div class="stat-value">${allData.totalVias}</div>
+                        <div class="stat-label">Vias Liberadas</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card priority-low">
+                        <div class="stat-value">${allData.totalPeso.toFixed(1)} ton</div>
+                        <div class="stat-label">Peso Total</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">${allData.avgPesoPerRem.toFixed(2)} ton</div>
+                        <div class="stat-label">Média Peso/Rem</div>
+                    </div>
+                </div>
+                <div class="col-12 mt-4">
+                    <div class="card card-custom">
+                        <div class="card-header card-header-custom">
+                            <h5 class="mb-0"><i class="bi bi-building"></i> Top 10 Municípios</h5>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card card-custom h-100">
-                                <div class="card-body stat-card priority-medium">
-                                    <div class="stat-value">${allData.totalVias.toLocaleString()}</div>
-                                    <div class="stat-label">Vias Afetadas</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card card-custom h-100">
-                                <div class="card-body stat-card priority-high">
-                                    <div class="stat-value">${allData.totalPeso.toFixed(1)}</div>
-                                    <div class="stat-label">Peso Total (ton)</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card card-custom h-100">
-                                <div class="card-body stat-card priority-low">
-                                    <div class="stat-value">${allData.sortedMunicipios.length}</div>
-                                    <div class="stat-label">Municipios</div>
-                                </div>
-                            </div>
+                        <div class="card-body p-0">
+                            <table class="table table-custom m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Município</th>
+                                        <th>Remoções</th>
+                                        <th>Vias</th>
+                                        <th>Peso (ton)</th>
+                                        <th>Última Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allData.sortedMunicipios.slice(0, 10).map(mun => `
+                                        <tr>
+                                            <td>${mun.MUNICIPIO}</td>
+                                            <td>${mun.REMOCOES}</td>
+                                            <td>${mun.VIAS}</td>
+                                            <td>${mun.PESO_TON.toFixed(1)}</td>
+                                            <td>${mun.FORMATTED_DATA}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-            `;
-
-            // Insights
-            html += `
-                <div class="col-12 mb-4">
+                <div class="col-12 mt-4">
                     <div class="card card-custom">
                         <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Insights e Recomendacoes</h5>
+                            <h5 class="mb-0"><i class="bi bi-map"></i> Top 10 Localidades</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-custom m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Localidade</th>
+                                        <th>Município</th>
+                                        <th>Remoções</th>
+                                        <th>Vias</th>
+                                        <th>Peso (ton)</th>
+                                        <th>Última Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allData.sortedLocalidades.slice(0, 10).map(loc => `
+                                        <tr>
+                                            <td>${loc.LOCALIDADE_ID}</td>
+                                            <td>${loc.MUNICIPIO}</td>
+                                            <td>${loc.REMOCOES}</td>
+                                            <td>${loc.VIAS}</td>
+                                            <td>${loc.PESO_TON.toFixed(1)}</td>
+                                            <td>${loc.FORMATTED_DATA}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 mt-4">
+                    <div class="card insight-card card-custom">
+                        <div class="card-header card-header-custom">
+                            <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Insights Principais - Análise Preditiva e Prescritiva</h5>
                         </div>
                         <div class="card-body">
                             <div class="insights-container">
-                                ${allData.insights}
+                                ${advancedInsights.map((insight, index) => `
+                                    <div class="insight-item ${insight.type}">
+                                        <div class="insight-title">
+                                            <i class="bi ${insight.icon} insight-icon"></i>
+                                            ${insight.title}
+                                        </div>
+                                        <div class="insight-desc">${insight.description}</div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     </div>
                 </div>
             `;
+            document.getElementById('analysis').innerHTML = analysisHtml;
 
-            // Top 10 Municipalities Table
-            html += `
-                <div class="col-md-6 mb-4">
-                    <div class="card card-custom h-100">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-building"></i> Top 10 Municipios</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-custom table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Municipio</th>
-                                            <th>Remocoes</th>
-                                            <th>Peso (ton)</th>
-                                            <th>Localidades</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${allData.sortedMunicipios.slice(0, 10).map(([mun, data]) => `
-                                            <tr>
-                                                <td><strong>${mun}</strong></td>
-                                                <td>${data.rem}</td>
-                                                <td>${data.peso.toFixed(1)}</td>
-                                                <td><span class="badge bg-primary">${data.localidades.size}</span></td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Top 10 Localities Table
-            html += `
-                <div class="col-md-6 mb-4">
-                    <div class="card card-custom h-100">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Top 10 Localidades</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-custom table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Localidade</th>
-                                            <th>Remocoes</th>
-                                            <th>Peso (ton)</th>
-                                            <th>BPM</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${allData.sortedLocalidades.slice(0, 10).map(([loc, data]) => {
-                                            const hasBPM = data.validBPMs && data.validBPMs.size > 0;
-                                            const bpmBadge = hasBPM ? 
-                                                `<span class="badge bg-success">${data.validBPMs.size}</span>` : 
-                                                `<span class="badge bg-warning">0</span>`;
-                                            return `
-                                                <tr>
-                                                    <td><strong>${loc.split('/')[1]?.trim() || loc}</strong><br><small class="text-muted">${loc.split('/')[0]?.trim()}</small></td>
-                                                    <td>${data.rem}</td>
-                                                    <td>${data.peso.toFixed(1)}</td>
-                                                    <td>${bpmBadge}</td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('analysis').innerHTML = html;
-        }
-
-        function renderCharts() {
-            let html = `
-                <div class="col-md-6 mb-4">
+            // Gera gráficos
+            let chartsHtml = `
+                <div class="col-md-6">
                     <div class="card card-custom">
                         <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Remocoes por Municipio</h5>
+                            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Remoções por Município</h5>
                         </div>
                         <div class="card-body">
                             <div class="chart-container">
@@ -1426,97 +1331,60 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6">
                     <div class="card card-custom">
                         <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribuicao de BPMs</h5>
+                            <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribuição por Área</h5>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="bpmChart"></canvas>
+                            <div class="chart-container-pie">
+                                <canvas id="areaChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
-            
-            document.getElementById('charts').innerHTML = html;
+            document.getElementById('charts').innerHTML = chartsHtml;
 
-            // Municipality Chart
-            const topMunicipios = allData.sortedMunicipios.slice(0, 10);
-            new Chart(document.getElementById('municipioChart'), {
+            // Dados para gráficos
+            const municipioLabels = allData.sortedMunicipios.slice(0, 10).map(m => m.MUNICIPIO);
+            const municipioData = allData.sortedMunicipios.slice(0, 10).map(m => m.REMOCOES);
+
+            const ctxMun = document.getElementById('municipioChart').getContext('2d');
+            new Chart(ctxMun, {
                 type: 'bar',
                 data: {
-                    labels: topMunicipios.map(([mun]) => mun.length > 15 ? mun.substring(0, 12) + '...' : mun),
+                    labels: municipioLabels,
                     datasets: [{
-                        label: 'Remocoes',
-                        data: topMunicipios.map(([, data]) => data.rem),
-                        backgroundColor: 'rgba(26, 95, 180, 0.7)',
-                        borderColor: 'rgba(26, 95, 180, 1)',
-                        borderWidth: 1
-                    }, {
-                        label: 'Localidades com BPM',
-                        data: topMunicipios.map(([mun]) => {
-                            let count = 0;
-                            if (allData.localidadesByMunicipio[mun]) {
-                                Object.values(allData.localidadesByMunicipio[mun]).forEach(loc => {
-                                    if (loc.validBPMs && loc.validBPMs.size > 0) {
-                                        count++;
-                                    }
-                                });
-                            }
-                            return count;
-                        }),
-                        backgroundColor: 'rgba(38, 162, 105, 0.7)',
-                        borderColor: 'rgba(38, 162, 105, 1)',
-                        borderWidth: 1,
-                        type: 'line',
-                        yAxisID: 'y1'
+                        label: 'Remoções',
+                        data: municipioData,
+                        backgroundColor: 'rgba(26, 95, 180, 0.6)',
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Remocoes'
-                            }
-                        },
-                        y1: {
-                            position: 'right',
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Localidades com BPMs'
-                            },
-                            grid: {
-                                drawOnChartArea: false
-                            }
-                        }
-                }
+                        y: { beginAtZero: true }
+                    }
                 }
             });
 
-            // BPM Chart
-            const topLocalidadesComBPM = allData.sortedLocalidades
-                .filter(([loc, data]) => data.validBPMs && data.validBPMs.size > 0)
-                .slice(0, 10);
-            
-            new Chart(document.getElementById('bpmChart'), {
-                type: 'doughnut',
+            const areaCounts = {};
+            allData.filteredData.forEach(row => {
+                areaCounts[row.AREA] = (areaCounts[row.AREA] || 0) + row.REMOCOES;
+            });
+            const areaLabels = Object.keys(areaCounts);
+            const areaData = Object.values(areaCounts);
+
+            const ctxArea = document.getElementById('areaChart').getContext('2d');
+            new Chart(ctxArea, {
+                type: 'pie',
                 data: {
-                    labels: topLocalidadesComBPM.map(([loc]) => loc.split('/')[1]?.trim() || loc),
+                    labels: areaLabels,
                     datasets: [{
-                        data: topLocalidadesComBPM.map(([, data]) => data.validBPMs ? data.validBPMs.size : 0),
-                        backgroundColor: [
-                            '#1a5fb4', '#26a269', '#e5a50a', '#e01b24',
-                            '#613583', '#c64600', '#1a9998', '#7e4b8b',
-                            '#2aa1af', '#ff6b6b'
-                        ],
-                        borderWidth: 1
+                        data: areaData,
+                        backgroundColor: ['#1a5fb4', '#26a269', '#e5a50a', '#e01b24', '#666', '#8a2be2', '#ff69b4', '#20b2aa']
                     }]
                 },
                 options: {
@@ -1524,422 +1392,215 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
+                            position: 'right',
                             labels: {
-                                boxWidth: 12
+                                boxWidth: 12,
+                                padding: 15
                             }
                         }
                     }
                 }
             });
+
+            document.getElementById('planningSection').style.display = 'block';
+            document.getElementById('pdfSection').style.display = 'block';
         }
 
-        // NOVA FUNÇÃO: Distribuição inteligente de localidades com rodízio
-        function distribuirLocalidadesInteligente(localidadesComDados, totalDias, mediaDesejada = 8) {
-            // Ordenar localidades por prioridade (remoções, peso, vias)
-            const localidadesOrdenadas = [...localidadesComDados].sort((a, b) => {
-                const prioridadeA = (a.data.rem * 2) + (a.data.peso * 0.5) + (a.data.vias * 0.3);
-                const prioridadeB = (b.data.rem * 2) + (b.data.peso * 0.5) + (b.data.vias * 0.3);
-                return prioridadeB - prioridadeA;
-            });
-            
-            // Inicializar array de distribuição
-            const distribuicao = Array.from({ length: totalDias }, () => []);
-            
-            // Controlar repetição de CPA no mesmo dia
-            const cpasPorDia = Array.from({ length: totalDias }, () => new Set());
-            
-            // Distribuir localidades
-            let diaAtual = 0;
-            let localidadesAtribuidas = 0;
-            const maxPorDia = Math.ceil(localidadesOrdenadas.length / totalDias) + 2;
-            
-            localidadesOrdenadas.forEach((localidade, index) => {
-                let melhorDia = -1;
-                let melhorPontuacao = -1;
-                
-                // Encontrar melhor dia para esta localidade
-                for (let d = 0; d < totalDias; d++) {
-                    // Verificar se o dia já tem muitas localidades
-                    if (distribuicao[d].length >= maxPorDia) continue;
-                    
-                    let pontuacao = 0;
-                    
-                    // Preferir dias com menos localidades
-                    pontuacao += (maxPorDia - distribuicao[d].length) * 10;
-                    
-                    // Penalizar dias que já têm a mesma CPA
-                    if (cpasPorDia[d].has(localidade.cpa)) {
-                        pontuacao -= 50;
-                    }
-                    
-                    // Preferir distribuir localidades da mesma CPA em dias diferentes
-                    const diasComMesmaCPA = cpasPorDia.reduce((count, cpas, idx) => 
-                        cpas.has(localidade.cpa) ? count + 1 : count, 0);
-                    if (diasComMesmaCPA === 0) {
-                        pontuacao += 20; // Primeira vez que esta CPA aparece
-                    }
-                    
-                    // Alternar entre dias para evitar concentração
-                    const distanciaDoUltimo = Math.abs(d - diaAtual);
-                    pontuacao += (5 - distanciaDoUltimo) * 2;
-                    
-                    if (pontuacao > melhorPontuacao) {
-                        melhorPontuacao = pontuacao;
-                        melhorDia = d;
-                    }
-                }
-                
-                // Se não encontrou dia adequado, usar o dia com menos localidades
-                if (melhorDia === -1) {
-                    melhorDia = distribuicao.reduce((minIndex, dia, index) => 
-                        dia.length < distribuicao[minIndex].length ? index : minIndex, 0);
-                }
-                
-                // Atribuir localidade ao dia
-                distribuicao[melhorDia].push(localidade);
-                cpasPorDia[melhorDia].add(localidade.cpa);
-                diaAtual = melhorDia;
-                localidadesAtribuidas++;
-            });
-            
-            return distribuicao;
-        }
-
-        // FUNÇÃO PRINCIPAL DE PLANEJAMENTO COM NOVA LÓGICA
-        document.getElementById('generatePlanningBtn').addEventListener('click', function() {
+        // Gerar planejamento
+        function generatePlanning() {
             const startDateStr = document.getElementById('startDateInput').value;
             const numWeeks = parseInt(document.getElementById('weeksInput').value);
-            
-            if (!startDateStr) {
-                alert('Por favor, selecione uma data valida.');
-                return;
-            }
-            
-            const parts = startDateStr.split('-');
-            const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
-            startDate.setHours(12, 0, 0, 0);
-            
+            const startDate = new Date(startDateStr);
+
             const weekdays = getNextWeekdays(startDate, numWeeks);
-            const totalDias = weekdays.length;
-            
-            // 1. Coletar TODAS as localidades disponiveis
-            const todasLocalidades = Object.entries(allData.recentByLocalidade)
-                .sort((a, b) => b[1].rem - a[1].rem);
-            
-            // 2. Processar dados das localidades
-            const localidadesComDados = todasLocalidades.map(([locFull, data]) => {
-                const [municipio, localidade] = locFull.split(' / ');
-                const localidadeNome = localidade || municipio;
-                
-                let bpmValido = 'BPM nao informado';
-                let bpmIsValid = false;
-                let todosBPMsValidos = [];
-                
-                if (data.validBPMs && data.validBPMs.size > 0) {
-                    todosBPMsValidos = Array.from(data.validBPMs);
-                    bpmValido = todosBPMsValidos[0];
-                    bpmIsValid = true;
-                } else if (allData.bpmByLocalidade[locFull]) {
-                    const bpmEntries = Object.entries(allData.bpmByLocalidade[locFull])
-                        .filter(([bpm]) => bpm !== 'Nao informado')
-                        .sort((a, b) => b[1] - a[1]);
-                    if (bpmEntries.length > 0) {
-                        bpmValido = bpmEntries[0][0];
-                        bpmIsValid = true;
-                        todosBPMsValidos = [bpmValido];
-                    }
-                }
-                
-                let cpaParaLocalidade = data.cpa || 'CPA nao informada';
-                if (!cpaParaLocalidade || cpaParaLocalidade === 'CPA nao informada') {
-                    if (allData.cpaByMunicipio[municipio]) {
-                        const cpaEntries = Object.entries(allData.cpaByMunicipio[municipio])
-                            .filter(([cpa]) => cpa !== 'Nao informado')
-                            .sort((a, b) => b[1] - a[1]);
-                        if (cpaEntries.length > 0) {
-                            cpaParaLocalidade = cpaEntries[0][0];
-                        }
-                    }
-                }
-                
-                const intensityLevel = data.rem > 10 ? 'ALTA' : 
-                                     data.rem > 5 ? 'MEDIA' : 'MODERADA';
-                
-                return {
-                    locFull: locFull,
-                    municipio: municipio,
-                    localidadeNome: localidadeNome,
-                    data: data,
-                    cpa: cpaParaLocalidade,
-                    bpm: bpmValido,
-                    bpmIsValid: bpmIsValid,
-                    todosBPMsValidos: todosBPMsValidos,
-                    intensityLevel: intensityLevel,
-                    intensityColor: intensityLevel === 'ALTA' ? 'bg-danger' : 
-                                   intensityLevel === 'MEDIA' ? 'bg-warning' : 'bg-info'
-                };
+            const localidades = [];
+            for (const key in allData.recentByLocalidade) {
+                const data = allData.recentByLocalidade[key];
+                const bpmValid = isBPMValidForLocalidade(data.BPM, data.LOCALIDADE_ID, data.BAIRRO, data.MUNICIPIO, allData.bpmValidationData);
+                const intensityLevel = data.REMOCOES > 50 ? 'ALTA' : data.REMOCOES > 20 ? 'MEDIA' : 'BAIXA';
+                const intensityColor = intensityLevel === 'ALTA' ? 'bg-danger' : intensityLevel === 'MEDIA' ? 'bg-warning' : 'bg-success';
+                localidades.push({
+                    localidadeNome: data.LOCALIDADE_ID,
+                    municipio: data.MUNICIPIO,
+                    cpa: data.CPA,
+                    bpm: data.BPM,
+                    bpmIsValid: bpmValid,
+                    data: { rem: data.REMOCOES, peso: data.PESO_TON, vias: data.VIAS },
+                    intensityLevel,
+                    intensityColor
+                });
+            }
+
+            // Ordenar localidades
+            localidades.sort((a, b) => {
+                const scoreA = (a.intensityLevel === 'ALTA' ? 3 : a.intensityLevel === 'MEDIA' ? 2 : 1) * 10000 + (a.bpmIsValid ? 1000 : 0) + a.data.rem * 10 + a.data.peso;
+                const scoreB = (b.intensityLevel === 'ALTA' ? 3 : b.intensityLevel === 'MEDIA' ? 2 : 1) * 10000 + (b.bpmIsValid ? 1000 : 0) + b.data.rem * 10 + b.data.peso;
+                return scoreB - scoreA;
             });
-            
-            // 3. Distribuir localidades usando a nova lógica inteligente
-            const distribuicaoPorDia = distribuirLocalidadesInteligente(localidadesComDados, totalDias, 8);
-            
-            // 4. Agrupar localidades por CPA e Município para estatísticas
+
             const localidadesPorCPA = {};
             const localidadesPorMunicipio = {};
-            
-            localidadesComDados.forEach(loc => {
-                if (!localidadesPorCPA[loc.cpa]) {
-                    localidadesPorCPA[loc.cpa] = [];
-                }
+            localidades.forEach(loc => {
+                if (!localidadesPorCPA[loc.cpa]) localidadesPorCPA[loc.cpa] = [];
                 localidadesPorCPA[loc.cpa].push(loc);
-                
-                if (!localidadesPorMunicipio[loc.municipio]) {
-                    localidadesPorMunicipio[loc.municipio] = [];
-                }
+                if (!localidadesPorMunicipio[loc.municipio]) localidadesPorMunicipio[loc.municipio] = [];
                 localidadesPorMunicipio[loc.municipio].push(loc);
             });
-            
-            // 5. Armazenar dados do planejamento
-            allData.planningData = {
-                startDate: startDate,
-                numWeeks: numWeeks,
-                weekdays: weekdays,
-                distribuicaoPorDia: distribuicaoPorDia,
-                localidadesComDados: localidadesComDados,
-                localidadesPorCPA: localidadesPorCPA,
-                localidadesPorMunicipio: localidadesPorMunicipio,
-                semanas: Math.ceil(weekdays.length / 5)
-            };
-            
-            // 6. Renderizar planejamento com a nova distribuição
-            renderPlanningCompleto(distribuicaoPorDia, weekdays, numWeeks, localidadesPorCPA, localidadesPorMunicipio);
-        });
 
-        // FUNÇÃO PARA RENDERIZAR PLANEJAMENTO COMPLETO COM NOVA DISTRIBUIÇÃO
-        function renderPlanningCompleto(distribuicaoPorDia, weekdays, numWeeks, localidadesPorCPA, localidadesPorMunicipio) {
-            const totalLocalidades = distribuicaoPorDia.flat().length;
-            const localidadesComBPMValido = distribuicaoPorDia.flat().filter(loc => loc.bpmIsValid).length;
-            const semanas = Math.ceil(weekdays.length / 5);
-            
-            // Calcular estatísticas de distribuição
-            const estatisticasDias = distribuicaoPorDia.map((dia, idx) => ({
-                dia: idx + 1,
-                total: dia.length,
-                comBPM: dia.filter(loc => loc.bpmIsValid).length,
-                cpas: new Set(dia.map(loc => loc.cpa)).size
-            }));
-            
-            const mediaPorDia = (totalLocalidades / weekdays.length).toFixed(1);
-            const maxPorDia = Math.max(...estatisticasDias.map(d => d.total));
-            const minPorDia = Math.min(...estatisticasDias.map(d => d.total));
-            
-            let planningHtml = `
-                <div class="col-12">
-                    <div class="card card-custom">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Planejamento Otimizado - ${numWeeks} Semanas</h5>
-                            <small class="text-white">Distribuição inteligente com rodízio de CPA e média de ${mediaPorDia} localidades/dia</small>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-success mb-4">
-                                <i class="bi bi-check-circle"></i>
-                                <strong>PLANEJAMENTO OTIMIZADO GERADO</strong><br>
-                                <strong>Localidades Totais:</strong> ${totalLocalidades}<br>
-                                <strong>Localidades com BPMs Validados:</strong> ${localidadesComBPMValido} (${Math.round((localidadesComBPMValido/totalLocalidades)*100)}%)<br>
-                                <strong>Semanas de Atuacao:</strong> ${semanas} semanas (${weekdays.length} dias uteis)<br>
-                                <strong>Média por Dia:</strong> ${mediaPorDia} localidades (máx: ${maxPorDia}, mín: ${minPorDia})<br>
-                                <strong>CPAs Envolvidas:</strong> ${Object.keys(localidadesPorCPA).length}<br>
-                                <strong>Municipios Envolvidos:</strong> ${Object.keys(localidadesPorMunicipio).length}
-                            </div>
-                            
-                            <div class="alert alert-info mb-4">
-                                <i class="bi bi-info-circle"></i>
-                                <strong>Nova Lógica de Distribuição:</strong><br>
-                                1. Rodízio inteligente para evitar repetição de CPA no mesmo dia<br>
-                                2. Média controlada de 8 localidades por dia<br>
-                                3. Priorização por criticidade (remoções, peso, vias)<br>
-                                4. Distribuição equilibrada entre os dias
-                            </div>
-                            
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header bg-primary text-white">
-                                            <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Distribuição por Dia</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="table-responsive">
-                                                <table class="table table-sm">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Dia</th>
-                                                            <th>Localidades</th>
-                                                            <th>Com BPM</th>
-                                                            <th>CPAs</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        ${estatisticasDias.map(est => `
-                                                            <tr>
-                                                                <td>Dia ${est.dia}</td>
-                                                                <td><span class="badge ${est.total >= 8 ? 'bg-success' : 'bg-warning'}">${est.total}</span></td>
-                                                                <td><span class="badge ${est.comBPM > 0 ? 'bg-success' : 'bg-secondary'}">${est.comBPM}</span></td>
-                                                                <td><span class="badge bg-info">${est.cpas}</span></td>
-                                                            </tr>
-                                                        `).join('')}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header bg-success text-white">
-                                            <h6 class="mb-0"><i class="bi bi-pie-chart"></i> Estatísticas Gerais</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <div class="text-center">
-                                                        <div class="display-6 text-primary">${mediaPorDia}</div>
-                                                        <small class="text-muted">Média/Dia</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="text-center">
-                                                        <div class="display-6 text-success">${localidadesComBPMValido}</div>
-                                                        <small class="text-muted">Com BPM</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-3">
-                                                <div class="progress mb-2">
-                                                    <div class="progress-bar bg-success" style="width: ${(localidadesComBPMValido/totalLocalidades)*100}%">
-                                                        ${Math.round((localidadesComBPMValido/totalLocalidades)*100)}% com BPM
-                                                    </div>
-                                                </div>
-                                                <small>${totalLocalidades - localidadesComBPMValido} localidades sem BPM validado</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-            `;
+            const numDays = weekdays.length;
+            const distribuicaoPorDia = Array.from({ length: numDays }, () => []);
+            const dayRemLoads = new Array(numDays).fill(0);
+            const dayPesoLoads = new Array(numDays).fill(0);
 
-            // Para cada semana
-            for (let week = 0; week < semanas; week++) {
-                const weekStart = week * 5;
-                const weekDates = weekdays.slice(weekStart, weekStart + 5);
-                const semanaNum = week + 1;
-                
-                planningHtml += `
-                    <div class="card card-custom mb-4">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0">Semana ${semanaNum}: ${formatDate(weekDates[0])} a ${formatDate(weekDates[4] || weekDates[weekDates.length - 1])}</h5>
-                            <small class="text-white">Distribuição equilibrada por dia</small>
-                        </div>
-                        <div class="card-body">
-                `;
-                
-                // Para cada dia da semana
-                for (let dia = 0; dia < 5; dia++) {
-                    if (weekDates[dia]) {
-                        const date = weekDates[dia];
-                        const diaGlobalIndex = week * 5 + dia;
-                        const localidadesDoDia = distribuicaoPorDia[diaGlobalIndex] || [];
-                        
-                        // Agrupar localidades do dia por CPA
-                        const cpasDoDia = {};
-                        localidadesDoDia.forEach(loc => {
-                            if (!cpasDoDia[loc.cpa]) {
-                                cpasDoDia[loc.cpa] = [];
+            for (const loc of localidades) {
+                let bestDay = -1;
+                let bestScore = -Infinity;
+                for (let d = 0; d < numDays; d++) {
+                    if (distribuicaoPorDia[d].length >= 8) continue;
+                    const cpaMatch = distribuicaoPorDia[d].filter(l => l.cpa === loc.cpa).length;
+                    const munMatch = distribuicaoPorDia[d].filter(l => l.municipio === loc.municipio).length;
+                    const matchScore = 10 * cpaMatch + 5 * munMatch;
+                    const newRem = dayRemLoads[d] + loc.data.rem;
+                    const newPeso = dayPesoLoads[d] + loc.data.peso;
+                    const avgRem = dayRemLoads.reduce((sum, l) => sum + l, 0) / numDays;
+                    const avgPeso = dayPesoLoads.reduce((sum, l) => sum + l, 0) / numDays;
+                    const balanceScore = -((newRem - avgRem) ** 2 + (newPeso - avgPeso) ** 2);
+                    const totalScore = matchScore + balanceScore;
+                    if (totalScore > bestScore) {
+                        bestScore = totalScore;
+                        bestDay = d;
+                    }
+                }
+                if (bestDay !== -1) {
+                    distribuicaoPorDia[bestDay].push(loc);
+                    dayRemLoads[bestDay] += loc.data.rem;
+                    dayPesoLoads[bestDay] += loc.data.peso;
+                }
+            }
+
+            // Post-processing to enforce 8 per day per week
+            for (let w = 0; w < numWeeks; w++) {
+                const weekDays = [];
+                for (let d = w * 5; d < w * 5 + 5 && d < numDays; d++) {
+                    weekDays.push(d);
+                }
+
+                let overDays = weekDays.filter(d => distribuicaoPorDia[d].length > 8);
+                while (overDays.length > 0) {
+                    for (const overD of overDays) {
+                        const excess = distribuicaoPorDia[overD].length - 8;
+                        for (let i = 0; i < excess; i++) {
+                            const locToMove = distribuicaoPorDia[overD].pop();
+                            const underDays = weekDays.filter(d => distribuicaoPorDia[d].length < 8);
+                            let targetD;
+                            if (underDays.length > 0) {
+                                targetD = underDays.reduce((min, d) => distribuicaoPorDia[d].length < distribuicaoPorDia[min].length ? d : min, underDays[0]);
+                            } else {
+                                // Redistribute to other days in the plan
+                                targetD = distribuicaoPorDia.reduce((minIdx, day, idx, arr) => day.length < arr[minIdx].length ? idx : minIdx, 0);
                             }
-                            cpasDoDia[loc.cpa].push(loc);
-                        });
-                        
-                        const cpasOrdenadasDoDia = Object.keys(cpasDoDia)
-                            .sort((a, b) => cpasDoDia[b].length - cpasDoDia[a].length);
-                        
-                        planningHtml += `
-                            <div class="day-header mb-3">
-                                <h6><i class="bi bi-calendar-day"></i> ${formatDate(date)} - ${getDayNameFull(dia)}</h6>
-                                <div class="day-summary">
-                                    <span class="day-total-badge">${localidadesDoDia.length} loc.</span>
-                                    <span class="badge bg-success ms-1">${localidadesDoDia.filter(loc => loc.bpmIsValid).length} com BPM</span>
-                                    <span class="badge bg-primary ms-1">${Object.keys(cpasDoDia).length} CPAs</span>
-                                </div>
-                            </div>
-                        `;
-                        
-                        if (cpasOrdenadasDoDia.length === 0) {
-                            planningHtml += `<div class="alert alert-warning mb-4">Nenhuma localidade agendada para este dia.</div>`;
-                        } else {
-                            planningHtml += `<div class="scrollable-localidades mb-4">`;
-                            
-                            cpasOrdenadasDoDia.forEach(cpa => {
-                                const localidadesCPA = cpasDoDia[cpa];
-                                
-                                planningHtml += `
-                                    <div class="cpa-group">
-                                        <div class="cpa-group-header">
-                                            <i class="bi bi-shield"></i> ${cpa} 
-                                            <span class="badge bg-primary">${localidadesCPA.length} loc.</span>
-                                            <span class="badge bg-success">${localidadesCPA.filter(l => l.bpmIsValid).length} com BPM</span>
-                                        </div>
-                                        <table class="localidade-table">
-                                            <thead>
-                                                <tr>
-                                                    <th width="35%">Localidade</th>
-                                                    <th width="25%">Município</th>
-                                                    <th width="20%">BPM</th>
-                                                    <th width="20%">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                `;
-                                
-                                localidadesCPA.sort((a, b) => a.municipio.localeCompare(b.municipio));
-                                
-                                localidadesCPA.forEach(localidade => {
-                                    const bpmStatus = localidade.bpmIsValid ? 
-                                        `<span class="badge bg-success compact-badge">${localidade.bpm}</span>` :
-                                        `<span class="badge bg-warning compact-badge">${localidade.bpm}</span>`;
-                                    
-                                    planningHtml += `
-                                        <tr>
-                                            <td>
-                                                <strong>${localidade.localidadeNome}</strong><br>
-                                                <small class="text-muted">${localidade.data.rem} rem | ${localidade.data.peso.toFixed(1)} ton</small>
-                                            </td>
-                                            <td>${localidade.municipio}</td>
-                                            <td>${bpmStatus}</td>
-                                            <td>
-                                                <span class="badge ${localidade.intensityColor} compact-badge">${localidade.intensityLevel}</span>
-                                                ${localidade.bpmIsValid ? 
-                                                    '<span class="badge bg-success compact-badge">BPM OK</span>' : 
-                                                    '<span class="badge bg-warning compact-badge">Sem BPM</span>'
-                                                }
-                                            </td>
-                                        </tr>
-                                    `;
-                                });
-                                
-                                planningHtml += `
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                `;
-                            });
-                            
-                            planningHtml += `</div>`;
-                        }
-                        
-                        if (dia < 4) {
-                            planningHtml += `<hr class="my-4">`;
+                            distribuicaoPorDia[targetD].push(locToMove);
+                            dayRemLoads[overD] -= locToMove.data.rem;
+                            dayPesoLoads[overD] -= locToMove.data.peso;
+                            dayRemLoads[targetD] += locToMove.data.rem;
+                            dayPesoLoads[targetD] += locToMove.data.peso;
                         }
                     }
+                    overDays = weekDays.filter(d => distribuicaoPorDia[d].length > 8);
+                }
+            }
+
+            let planningHtml = '';
+            for (let semana = 0; semana < numWeeks; semana++) {
+                planningHtml += `
+                    <div class="col-12">
+                        <div class="card week-card">
+                            <div class="week-card-header">
+                                Semana ${semana + 1}
+                                <button class="btn btn-sm btn-light float-end view-week-details" data-week="${semana}">
+                                    <i class="bi bi-eye"></i> Visualizar Detalhes
+                                </button>
+                            </div>
+                            <div class="row no-gutters">
+                `;
+                for (let dia = 0; dia < 5; dia++) {
+                    const diaGlobalIndex = semana * 5 + dia;
+                    if (diaGlobalIndex >= numDays) break;
+                    const date = weekdays[diaGlobalIndex];
+                    planningHtml += `
+                        <div class="col-md day-column">
+                            <div class="day-header">
+                                ${getDayNameFull(dia)} - ${formatDate(date)}
+                                <span class="badge bg-primary ms-2">${distribuicaoPorDia[diaGlobalIndex].length} loc.</span>
+                            </div>
+                            <div class="scrollable-localidades">
+                    `;
+                    const localidadesDia = distribuicaoPorDia[diaGlobalIndex];
+                    const cpaGroups = {};
+                    localidadesDia.forEach(loc => {
+                        if (!cpaGroups[loc.cpa]) cpaGroups[loc.cpa] = [];
+                        cpaGroups[loc.cpa].push(loc);
+                    });
+
+                    Object.entries(cpaGroups).forEach(([cpa, localidadesCPA]) => {
+                        planningHtml += `
+                            <div class="cpa-group">
+                                <div class="cpa-group-header">${cpa}</div>
+                                <table class="localidade-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="35%">Localidade</th>
+                                            <th width="25%">Município</th>
+                                            <th width="20%">BPM</th>
+                                            <th width="20%">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        
+                        localidadesCPA.sort((a, b) => a.municipio.localeCompare(b.municipio));
+                        
+                        localidadesCPA.forEach(localidade => {
+                            const bpmStatus = localidade.bpmIsValid ? 
+                                `<span class="badge bg-success compact-badge">${localidade.bpm}</span>` :
+                                `<span class="badge bg-warning compact-badge">${localidade.bpm}</span>`;
+                            
+                            planningHtml += `
+                                <tr>
+                                    <td>
+                                        <strong>${localidade.localidadeNome}</strong><br>
+                                        <small class="text-muted">${localidade.data.rem} rem | ${localidade.data.peso.toFixed(1)} ton</small>
+                                    </td>
+                                    <td>${localidade.municipio}</td>
+                                    <td>${bpmStatus}</td>
+                                    <td>
+                                        <span class="badge ${localidade.intensityColor} compact-badge">${localidade.intensityLevel}</span>
+                                        ${localidade.bpmIsValid ? 
+                                            '<span class="badge bg-success compact-badge">BPM OK</span>' : 
+                                            '<span class="badge bg-warning compact-badge">Sem BPM</span>'
+                                        }
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        planningHtml += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    });
+                    
+                    planningHtml += `
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100 mt-2 view-day-details" 
+                                    data-week="${semana}" 
+                                    data-day="${dia}" 
+                                    data-date="${formatDate(date)}">
+                                <i class="bi bi-zoom-in"></i> Ver Detalhes do Dia
+                            </button>
+                        </div>
+                    `;
                 }
                 
                 planningHtml += `
@@ -1948,7 +1609,7 @@
                 `;
             }
 
-            // Resumo Estatistico
+            // Resumo Estatístico
             planningHtml += `
                     <div class="row mt-4">
                         <div class="col-md-6">
@@ -1973,7 +1634,6 @@
                                                     .slice(0, 10)
                                                     .map(([cpa, locs]) => {
                                                         const comBPM = locs.filter(l => l.bpmIsValid).length;
-                                                        // Calcular em quantos dias esta CPA aparece
                                                         const diasComCPA = new Set();
                                                         distribuicaoPorDia.forEach((dia, idx) => {
                                                             if (dia.some(loc => loc.cpa === cpa)) {
@@ -1992,20 +1652,23 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    <button class="btn btn-sm btn-outline-primary w-100 mt-2 view-cpa-summary">
+                                        <i class="bi bi-list-ul"></i> Ver Resumo Completo de CPAs
+                                    </button>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header bg-success text-white">
-                                    <h6 class="mb-0"><i class="bi bi-building"></i> Top Municipios por Localidades</h6>
+                                    <h6 class="mb-0"><i class="bi bi-building"></i> Top Municípios por Localidades</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>Municipio</th>
+                                                    <th>Município</th>
                                                     <th>Localidades</th>
                                                     <th>Com BPM</th>
                                                     <th>CPAs</th>
@@ -2030,6 +1693,9 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    <button class="btn btn-sm btn-outline-primary w-100 mt-2 view-municipio-summary">
+                                        <i class="bi bi-building"></i> Ver Resumo Completo de Municípios
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2040,24 +1706,995 @@
     `;
 
             document.getElementById('planning').innerHTML = planningHtml;
+
+            allData.planningData = {
+                distribuicaoPorDia,
+                localidadesPorCPA,
+                localidadesPorMunicipio,
+                semanas: numWeeks,
+                weekdays,
+                startDate: startDateStr,
+                numWeeks
+            };
+        }
+        
+        // Mostrar detalhes da semana
+        function showWeekDetails(weekNum) {
+            if (!allData.planningData) return;
+            
+            const { distribuicaoPorDia, weekdays } = allData.planningData;
+            const weekStart = weekNum * 5;
+            const weekEnd = Math.min(weekStart + 5, weekdays.length);
+            
+            let modalContent = `
+                <div class="text-center mb-4">
+                    <h4 class="text-primary">Detalhes da Semana ${weekNum + 1}</h4>
+                    <p class="text-muted">${formatDate(weekdays[weekStart])} a ${formatDate(weekdays[weekEnd - 1])}</p>
+                </div>
+                
+                <div class="row">
+            `;
+            
+            for (let d = 0; d < 5; d++) {
+                const diaGlobalIndex = weekNum * 5 + d;
+                if (diaGlobalIndex >= weekdays.length) break;
+                
+                const date = weekdays[diaGlobalIndex];
+                const localidadesDia = distribuicaoPorDia[diaGlobalIndex] || [];
+                
+                modalContent += `
+                    <div class="col-md-12 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">${getDayNameFull(d)} - ${formatDate(date)}</h6>
+                                <span class="badge bg-primary">${localidadesDia.length} localidades</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Localidade</th>
+                                                <th>Município</th>
+                                                <th>CPA</th>
+                                                <th>BPM</th>
+                                                <th>Remoções</th>
+                                                <th>Peso (ton)</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                `;
+                
+                localidadesDia.forEach(loc => {
+                    modalContent += `
+                        <tr>
+                            <td><strong>${loc.localidadeNome}</strong></td>
+                            <td>${loc.municipio}</td>
+                            <td>${loc.cpa}</td>
+                            <td>${loc.bpm}</td>
+                            <td>${loc.data.rem}</td>
+                            <td>${loc.data.peso.toFixed(1)}</td>
+                            <td>
+                                <span class="badge ${loc.intensityColor}">${loc.intensityLevel}</span>
+                                ${loc.bpmIsValid ? 
+                                    '<span class="badge bg-success">BPM OK</span>' : 
+                                    '<span class="badge bg-warning">Sem BPM</span>'
+                                }
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                modalContent += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            modalContent += `</div>`;
+            
+            document.getElementById('planningDetailContent').innerHTML = modalContent;
+            currentModalType = 'week';
+            currentModalData = { 
+                weekNum, 
+                weekStart, 
+                weekEnd, 
+                weekdays, 
+                distribuicaoPorDia: allData.planningData.distribuicaoPorDia 
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('planningDetailModal'));
+            modal.show();
+        }
+        
+        // Mostrar detalhes do dia
+        function showDayDetails(weekNum, dayNum, dateStr) {
+            if (!allData.planningData) return;
+            
+            const { distribuicaoPorDia, weekdays } = allData.planningData;
+            const diaGlobalIndex = weekNum * 5 + dayNum;
+            const localidadesDia = distribuicaoPorDia[diaGlobalIndex] || [];
+            const date = weekdays[diaGlobalIndex];
+            
+            // Agrupar por CPA para melhor organização
+            const cpaGroups = {};
+            localidadesDia.forEach(loc => {
+                if (!cpaGroups[loc.cpa]) cpaGroups[loc.cpa] = [];
+                cpaGroups[loc.cpa].push(loc);
+            });
+            
+            let modalContent = `
+                <div class="text-center mb-4">
+                    <h4 class="text-primary">Detalhes do Dia</h4>
+                    <p class="lead">${getDayNameFull(dayNum)} - ${dateStr}</p>
+                    <div class="row justify-content-center">
+                        <div class="col-auto">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <span class="badge bg-primary">${localidadesDia.length} Localidades</span>
+                                    <span class="badge bg-success ms-2">${localidadesDia.filter(l => l.bpmIsValid).length} com BPM</span>
+                                    <span class="badge bg-warning ms-2">${localidadesDia.filter(l => !l.bpmIsValid).length} sem BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion" id="dayDetailsAccordion">
+            `;
+            
+            let cpaIndex = 0;
+            for (const [cpa, localidades] of Object.entries(cpaGroups)) {
+                const totalRem = localidades.reduce((sum, loc) => sum + loc.data.rem, 0);
+                const totalPeso = localidades.reduce((sum, loc) => sum + loc.data.peso, 0);
+                const comBPM = localidades.filter(loc => loc.bpmIsValid).length;
+                
+                modalContent += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${cpaIndex}">
+                            <button class="accordion-button ${cpaIndex > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${cpaIndex}" aria-expanded="${cpaIndex === 0 ? 'true' : 'false'}" aria-controls="collapse${cpaIndex}">
+                                <strong>${cpa}</strong>
+                                <span class="badge bg-primary ms-2">${localidades.length} loc.</span>
+                                <span class="badge bg-info ms-2">${totalRem} rem</span>
+                                <span class="badge bg-secondary ms-2">${totalPeso.toFixed(1)} ton</span>
+                                <span class="badge ${comBPM > 0 ? 'bg-success' : 'bg-warning'} ms-2">${comBPM} com BPM</span>
+                            </button>
+                        </h2>
+                        <div id="collapse${cpaIndex}" class="accordion-collapse collapse ${cpaIndex === 0 ? 'show' : ''}" aria-labelledby="heading${cpaIndex}" data-bs-parent="#dayDetailsAccordion">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Localidade</th>
+                                                <th>Município</th>
+                                                <th>BPM</th>
+                                                <th>Remoções</th>
+                                                <th>Peso (ton)</th>
+                                                <th>Vias</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                `;
+                
+                localidades.forEach(loc => {
+                    modalContent += `
+                        <tr>
+                            <td><strong>${loc.localidadeNome}</strong></td>
+                            <td>${loc.municipio}</td>
+                            <td>${loc.bpm}</td>
+                            <td>${loc.data.rem}</td>
+                            <td>${loc.data.peso.toFixed(1)}</td>
+                            <td>${loc.data.vias || 'N/A'}</td>
+                            <td>
+                                <span class="badge ${loc.intensityColor}">${loc.intensityLevel}</span>
+                                ${loc.bpmIsValid ? 
+                                    '<span class="badge bg-success">Validado</span>' : 
+                                    '<span class="badge bg-warning">Não Validado</span>'
+                                }
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                modalContent += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                cpaIndex++;
+            }
+            
+            modalContent += `
+                </div>
+                
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-3"><i class="bi bi-graph-up"></i> Resumo Estatístico do Dia</h6>
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-primary">${localidadesDia.length}</h4>
+                                <small class="text-muted">Localidades</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-success">${localidadesDia.filter(l => l.bpmIsValid).length}</h4>
+                                <small class="text-muted">Com BPM Validado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-warning">${localidadesDia.filter(l => !l.bpmIsValid).length}</h4>
+                                <small class="text-muted">Sem BPM Validado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-danger">${localidadesDia.filter(l => l.intensityLevel === 'ALTA').length}</h4>
+                                <small class="text-muted">Prioridade ALTA</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('planningDetailContent').innerHTML = modalContent;
+            currentModalType = 'day';
+            currentModalData = { 
+                weekNum, 
+                dayNum, 
+                dateStr, 
+                diaGlobalIndex, 
+                localidadesDia, 
+                cpaGroups 
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('planningDetailModal'));
+            modal.show();
+        }
+        
+        // Mostrar resumo de CPAs
+        function showCPASummary() {
+            if (!allData.planningData) return;
+            
+            const { localidadesPorCPA, distribuicaoPorDia } = allData.planningData;
+            
+            let modalContent = `
+                <div class="text-center mb-4">
+                    <h4 class="text-primary">Resumo Completo de CPAs</h4>
+                    <p class="text-muted">Distribuição de localidades por CPA no planejamento</p>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>CPA</th>
+                                <th>Total Localidades</th>
+                                <th>Com BPM Validado</th>
+                                <th>Sem BPM</th>
+                                <th>% Cobertura</th>
+                                <th>Dias no Planejamento</th>
+                                <th>Prioridade ALTA</th>
+                                <th>Prioridade MÉDIA</th>
+                                <th>Prioridade BAIXA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            const cpasOrdenadas = Object.entries(localidadesPorCPA)
+                .sort((a, b) => b[1].length - a[1].length);
+            
+            cpasOrdenadas.forEach(([cpa, localidades]) => {
+                const comBPM = localidades.filter(l => l.bpmIsValid).length;
+                const semBPM = localidades.length - comBPM;
+                const cobertura = localidades.length > 0 ? Math.round((comBPM / localidades.length) * 100) : 0;
+                
+                // Calcular em quantos dias esta CPA aparece
+                const diasComCPA = new Set();
+                distribuicaoPorDia.forEach((dia, idx) => {
+                    if (dia.some(loc => loc.cpa === cpa)) {
+                        diasComCPA.add(idx);
+                    }
+                });
+                
+                const prioridadeAlta = localidades.filter(l => l.intensityLevel === 'ALTA').length;
+                const prioridadeMedia = localidades.filter(l => l.intensityLevel === 'MEDIA').length;
+                const prioridadeBaixa = localidades.filter(l => l.intensityLevel === 'BAIXA').length;
+                
+                modalContent += `
+                    <tr>
+                        <td><strong>${cpa}</strong></td>
+                        <td><span class="badge bg-primary">${localidades.length}</span></td>
+                        <td><span class="badge bg-success">${comBPM}</span></td>
+                        <td><span class="badge bg-warning">${semBPM}</span></td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${cobertura >= 70 ? 'bg-success' : cobertura >= 40 ? 'bg-warning' : 'bg-danger'}" 
+                                     role="progressbar" style="width: ${cobertura}%;" 
+                                     aria-valuenow="${cobertura}" aria-valuemin="0" aria-valuemax="100">
+                                    ${cobertura}%
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-info">${diasComCPA.size}</span></td>
+                        <td><span class="badge bg-danger">${prioridadeAlta}</span></td>
+                        <td><span class="badge bg-warning">${prioridadeMedia}</span></td>
+                        <td><span class="badge bg-success">${prioridadeBaixa}</span></td>
+                    </tr>
+                `;
+            });
+            
+            modalContent += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-3"><i class="bi bi-bar-chart"></i> Estatísticas Gerais</h6>
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-primary">${Object.keys(localidadesPorCPA).length}</h4>
+                                <small class="text-muted">Total de CPAs</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-success">${cpasOrdenadas.reduce((max, cpa) => Math.max(max, cpa[1].length), 0)}</h4>
+                                <small class="text-muted">Maior CPA (localidades)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-info">${Math.round(cpasOrdenadas.reduce((sum, cpa) => sum + cpa[1].length, 0) / Object.keys(localidadesPorCPA).length)}</h4>
+                                <small class="text-muted">Média por CPA</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('planningDetailContent').innerHTML = modalContent;
+            currentModalType = 'cpa';
+            currentModalData = { 
+                localidadesPorCPA: allData.planningData.localidadesPorCPA, 
+                cpasOrdenadas, 
+                distribuicaoPorDia: allData.planningData.distribuicaoPorDia 
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('planningDetailModal'));
+            modal.show();
+        }
+        
+        // Mostrar resumo de municípios
+        function showMunicipioSummary() {
+            if (!allData.planningData) return;
+            
+            const { localidadesPorMunicipio } = allData.planningData;
+            
+            let modalContent = `
+                <div class="text-center mb-4">
+                    <h4 class="text-primary">Resumo Completo de Municípios</h4>
+                    <p class="text-muted">Distribuição de localidades por município no planejamento</p>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Município</th>
+                                <th>Total Localidades</th>
+                                <th>Com BPM Validado</th>
+                                <th>Sem BPM</th>
+                                <th>% Cobertura</th>
+                                <th>CPAs Envolvidas</th>
+                                <th>Prioridade ALTA</th>
+                                <th>Prioridade MÉDIA</th>
+                                <th>Prioridade BAIXA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            const municipiosOrdenados = Object.entries(localidadesPorMunicipio)
+                .sort((a, b) => b[1].length - a[1].length);
+            
+            municipiosOrdenados.forEach(([municipio, localidades]) => {
+                const comBPM = localidades.filter(l => l.bpmIsValid).length;
+                const semBPM = localidades.length - comBPM;
+                const cobertura = localidades.length > 0 ? Math.round((comBPM / localidades.length) * 100) : 0;
+                
+                // Calcular quantas CPAs diferentes atuam neste município
+                const cpas = new Set(localidades.map(l => l.cpa)).size;
+                
+                const prioridadeAlta = localidades.filter(l => l.intensityLevel === 'ALTA').length;
+                const prioridadeMedia = localidades.filter(l => l.intensityLevel === 'MEDIA').length;
+                const prioridadeBaixa = localidades.filter(l => l.intensityLevel === 'BAIXA').length;
+                
+                modalContent += `
+                    <tr>
+                        <td><strong>${municipio}</strong></td>
+                        <td><span class="badge bg-primary">${localidades.length}</span></td>
+                        <td><span class="badge bg-success">${comBPM}</span></td>
+                        <td><span class="badge bg-warning">${semBPM}</span></td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${cobertura >= 70 ? 'bg-success' : cobertura >= 40 ? 'bg-warning' : 'bg-danger'}" 
+                                     role="progressbar" style="width: ${cobertura}%;" 
+                                     aria-valuenow="${cobertura}" aria-valuemin="0" aria-valuemax="100">
+                                    ${cobertura}%
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-info">${cpas}</span></td>
+                        <td><span class="badge bg-danger">${prioridadeAlta}</span></td>
+                        <td><span class="badge bg-warning">${prioridadeMedia}</span></td>
+                        <td><span class="badge bg-success">${prioridadeBaixa}</span></td>
+                    </tr>
+                `;
+            });
+            
+            modalContent += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-3"><i class="bi bi-bar-chart"></i> Estatísticas Gerais</h6>
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-primary">${Object.keys(localidadesPorMunicipio).length}</h4>
+                                <small class="text-muted">Total de Municípios</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-success">${municipiosOrdenados.reduce((max, mun) => Math.max(max, mun[1].length), 0)}</h4>
+                                <small class="text-muted">Maior Município (localidades)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-white rounded shadow-sm">
+                                <h4 class="text-info">${Math.round(municipiosOrdenados.reduce((sum, mun) => sum + mun[1].length, 0) / Object.keys(localidadesPorMunicipio).length)}</h4>
+                                <small class="text-muted">Média por Município</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('planningDetailContent').innerHTML = modalContent;
+            currentModalType = 'municipio';
+            currentModalData = { 
+                localidadesPorMunicipio: allData.planningData.localidadesPorMunicipio, 
+                municipiosOrdenados 
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('planningDetailModal'));
+            modal.show();
+        }
+        
+        // CORREÇÃO PRINCIPAL: Função para exportar conteúdo do modal para PDF
+        function exportModalToPDF() {
+            console.log('Iniciando exportação do modal para PDF...');
+            
+            if (!currentModalType || !currentModalData) {
+                alert('Nenhum dado disponível para exportação. Por favor, abra um modal primeiro.');
+                return;
+            }
+            
+            // Mostrar loading no modal
+            const modalLoading = document.getElementById('modalLoadingPdf');
+            if (modalLoading) {
+                modalLoading.style.display = 'flex';
+            }
+            
+            // Usar setTimeout para permitir que o loading seja mostrado
+            setTimeout(() => {
+                try {
+                    // Verificar se jsPDF está disponível
+                    if (typeof window.jspdf === 'undefined') {
+                        throw new Error('A biblioteca jsPDF não foi carregada corretamente.');
+                    }
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const margin = 15;
+                    let yPos = margin;
+                    const today = new Date();
+                    
+                    // Configurações comuns
+                    const primaryColor = [26, 95, 180];
+                    const secondaryColor = [38, 162, 105];
+                    
+                    // Cabeçalho do PDF
+                    doc.setFillColor(...primaryColor);
+                    doc.rect(0, 0, pageWidth, 20, 'F');
+                    
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(16);
+                    doc.setFont(undefined, 'bold');
+                    
+                    let title = '';
+                    let fileName = '';
+                    let subtitle = '';
+                    
+                    // Configurar título baseado no tipo de modal
+                    switch(currentModalType) {
+                        case 'week':
+                            title = `Detalhes da Semana ${currentModalData.weekNum + 1}`;
+                            fileName = `Semana_${currentModalData.weekNum + 1}_Detalhes.pdf`;
+                            subtitle = `${formatDate(currentModalData.weekdays[currentModalData.weekStart])} a ${formatDate(currentModalData.weekdays[currentModalData.weekEnd - 1])}`;
+                            break;
+                        case 'day':
+                            title = `Detalhes do Dia - ${currentModalData.dateStr}`;
+                            fileName = `Dia_${currentModalData.dateStr.replace(/\//g, '-')}_Detalhes.pdf`;
+                            subtitle = `${getDayNameFull(currentModalData.dayNum)}`;
+                            break;
+                        case 'cpa':
+                            title = 'Resumo Completo de CPAs';
+                            fileName = 'Resumo_CPAs.pdf';
+                            subtitle = 'Distribuição de localidades por CPA no planejamento';
+                            break;
+                        case 'municipio':
+                            title = 'Resumo Completo de Municípios';
+                            fileName = 'Resumo_Municipios.pdf';
+                            subtitle = 'Distribuição de localidades por município no planejamento';
+                            break;
+                    }
+                    
+                    doc.text(title, pageWidth/2, 12, { align: 'center' });
+                    
+                    doc.setFontSize(10);
+                    doc.text(`Operação Barricada Zero - ${today.toLocaleDateString('pt-BR')}`, pageWidth/2, 18, { align: 'center' });
+                    
+                    yPos = 30;
+                    
+                    // Subtítulo se houver
+                    if (subtitle) {
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFontSize(12);
+                        doc.setFont(undefined, 'normal');
+                        doc.text(subtitle, pageWidth/2, yPos, { align: 'center' });
+                        yPos += 10;
+                    }
+                    
+                    // Conteúdo específico para cada tipo de modal
+                    switch(currentModalType) {
+                        case 'week':
+                            exportWeekDetailsToPDF(doc, currentModalData, pageWidth, pageHeight, margin, yPos);
+                            break;
+                        case 'day':
+                            exportDayDetailsToPDF(doc, currentModalData, pageWidth, pageHeight, margin, yPos);
+                            break;
+                        case 'cpa':
+                            exportCPADetailsToPDF(doc, currentModalData, pageWidth, pageHeight, margin, yPos);
+                            break;
+                        case 'municipio':
+                            exportMunicipioDetailsToPDF(doc, currentModalData, pageWidth, pageHeight, margin, yPos);
+                            break;
+                    }
+                    
+                    // Adicionar numeração de páginas
+                    const totalPages = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= totalPages; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.setTextColor(150, 150, 150);
+                        doc.text(`Página ${i} de ${totalPages}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+                    }
+                    
+                    // Baixar o PDF
+                    console.log('Salvando PDF:', fileName);
+                    doc.save(fileName);
+                    
+                } catch (error) {
+                    console.error('Erro ao gerar PDF do modal:', error);
+                    alert('Erro ao gerar PDF: ' + error.message);
+                } finally {
+                    // Esconder loading
+                    const modalLoading = document.getElementById('modalLoadingPdf');
+                    if (modalLoading) {
+                        modalLoading.style.display = 'none';
+                    }
+                }
+            }, 500);
+        }
+        
+        // Função para exportar detalhes da semana para PDF
+        function exportWeekDetailsToPDF(doc, data, pageWidth, pageHeight, margin, yPos) {
+            const { weekNum, weekdays, distribuicaoPorDia } = data;
+            const weekStart = weekNum * 5;
+            const weekEnd = Math.min(weekStart + 5, weekdays.length);
+            
+            // Para cada dia da semana
+            for (let d = 0; d < 5; d++) {
+                const diaGlobalIndex = weekNum * 5 + d;
+                if (diaGlobalIndex >= weekdays.length) break;
+                
+                const date = weekdays[diaGlobalIndex];
+                const localidadesDia = distribuicaoPorDia[diaGlobalIndex] || [];
+                
+                // Verificar se precisa de nova página
+                if (yPos > pageHeight - 40) {
+                    doc.addPage();
+                    yPos = margin;
+                }
+                
+                // Título do dia
+                doc.setFillColor(240, 240, 240);
+                doc.rect(margin, yPos, pageWidth - 2*margin, 8, 'F');
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${getDayNameFull(d)} - ${formatDate(date)} (${localidadesDia.length} localidades)`, margin + 5, yPos + 5.5);
+                yPos += 10;
+                
+                if (localidadesDia.length === 0) {
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Nenhuma localidade agendada para este dia.', margin + 5, yPos);
+                    yPos += 8;
+                } else {
+                    // Tabela de localidades
+                    const tableData = localidadesDia.map(loc => [
+                        loc.localidadeNome.length > 25 ? loc.localidadeNome.substring(0, 22) + '...' : loc.localidadeNome,
+                        loc.municipio.length > 15 ? loc.municipio.substring(0, 12) + '...' : loc.municipio,
+                        loc.cpa.length > 15 ? loc.cpa.substring(0, 12) + '...' : loc.cpa,
+                        loc.bpm.length > 15 ? loc.bpm.substring(0, 12) + '...' : loc.bpm,
+                        loc.data.rem.toString(),
+                        loc.data.peso.toFixed(1),
+                        loc.intensityLevel,
+                        loc.bpmIsValid ? 'SIM' : 'NÃO'
+                    ]);
+                    
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Localidade', 'Município', 'CPA', 'BPM', 'Rem', 'Peso', 'Prior.', 'BPM Val.']],
+                        body: tableData,
+                        styles: { 
+                            fontSize: 8,
+                            cellPadding: 2,
+                            overflow: 'linebreak'
+                        },
+                        headStyles: { 
+                            fillColor: [26, 95, 180],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold'
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 35 },
+                            1: { cellWidth: 30 },
+                            2: { cellWidth: 25 },
+                            3: { cellWidth: 25 },
+                            4: { cellWidth: 15, halign: 'center' },
+                            5: { cellWidth: 20, halign: 'center' },
+                            6: { cellWidth: 15, halign: 'center' },
+                            7: { cellWidth: 15, halign: 'center' }
+                        },
+                        margin: { left: margin, right: margin },
+                        didParseCell: function(data) {
+                            if (data.column.index === 6 && data.section === 'body') {
+                                if (data.cell.raw === 'ALTA') {
+                                    data.cell.styles.textColor = [224, 27, 36];
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else if (data.cell.raw === 'MEDIA') {
+                                    data.cell.styles.textColor = [229, 165, 10];
+                                } else {
+                                    data.cell.styles.textColor = [38, 162, 105];
+                                }
+                            }
+                            if (data.column.index === 7 && data.section === 'body') {
+                                if (data.cell.raw === 'SIM') {
+                                    data.cell.styles.textColor = [38, 162, 105];
+                                    data.cell.styles.fontStyle = 'bold';
+                                } else {
+                                    data.cell.styles.textColor = [229, 165, 10];
+                                }
+                            }
+                        }
+                    });
+                    
+                    yPos = doc.lastAutoTable.finalY + 10;
+                }
+                
+                // Espaço entre dias
+                if (d < 4) {
+                    yPos += 5;
+                }
+            }
+        }
+        
+        // Função para exportar detalhes do dia para PDF
+        function exportDayDetailsToPDF(doc, data, pageWidth, pageHeight, margin, yPos) {
+            const { dateStr, localidadesDia, cpaGroups } = data;
+            
+            // Estatísticas do dia
+            const totalLocalidades = localidadesDia.length;
+            const comBPM = localidadesDia.filter(l => l.bpmIsValid).length;
+            const semBPM = totalLocalidades - comBPM;
+            const prioridadeAlta = localidadesDia.filter(l => l.intensityLevel === 'ALTA').length;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Localidades: ${totalLocalidades} | Com BPM: ${comBPM} | Sem BPM: ${semBPM} | Prioridade ALTA: ${prioridadeAlta}`, margin, yPos);
+            yPos += 10;
+            
+            // Agrupar por CPA
+            for (const [cpa, localidades] of Object.entries(cpaGroups)) {
+                // Verificar se precisa de nova página
+                if (yPos > pageHeight - 40) {
+                    doc.addPage();
+                    yPos = margin;
+                }
+                
+                // Título da CPA
+                doc.setFillColor(240, 247, 255);
+                doc.rect(margin, yPos, pageWidth - 2*margin, 8, 'F');
+                doc.setTextColor(26, 95, 180);
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(`CPA: ${cpa} (${localidades.length} localidades)`, margin + 5, yPos + 5.5);
+                yPos += 10;
+                
+                // Tabela de localidades da CPA
+                const tableData = localidades.map(loc => [
+                    loc.localidadeNome.length > 25 ? loc.localidadeNome.substring(0, 22) + '...' : loc.localidadeNome,
+                    loc.municipio.length > 15 ? loc.municipio.substring(0, 12) + '...' : loc.municipio,
+                    loc.bpm.length > 20 ? loc.bpm.substring(0, 17) + '...' : loc.bpm,
+                    loc.data.rem.toString(),
+                    loc.data.peso.toFixed(1),
+                    loc.data.vias || '0',
+                    loc.intensityLevel,
+                    loc.bpmIsValid ? 'SIM' : 'NÃO'
+                ]);
+                
+                doc.autoTable({
+                    startY: yPos,
+                    head: [['Localidade', 'Município', 'BPM', 'Rem', 'Peso', 'Vias', 'Prior.', 'BPM Val.']],
+                    body: tableData,
+                    styles: { 
+                        fontSize: 8,
+                        cellPadding: 2,
+                        overflow: 'linebreak'
+                    },
+                    headStyles: { 
+                        fillColor: [38, 162, 105],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 35 },
+                        1: { cellWidth: 25 },
+                        2: { cellWidth: 30 },
+                        3: { cellWidth: 15, halign: 'center' },
+                        4: { cellWidth: 20, halign: 'center' },
+                        5: { cellWidth: 15, halign: 'center' },
+                        6: { cellWidth: 15, halign: 'center' },
+                        7: { cellWidth: 15, halign: 'center' }
+                    },
+                    margin: { left: margin, right: margin },
+                    didParseCell: function(data) {
+                        if (data.column.index === 6 && data.section === 'body') {
+                            if (data.cell.raw === 'ALTA') {
+                                data.cell.styles.textColor = [224, 27, 36];
+                                data.cell.styles.fontStyle = 'bold';
+                            } else if (data.cell.raw === 'MEDIA') {
+                                data.cell.styles.textColor = [229, 165, 10];
+                            } else {
+                                data.cell.styles.textColor = [38, 162, 105];
+                            }
+                        }
+                        if (data.column.index === 7 && data.section === 'body') {
+                            if (data.cell.raw === 'SIM') {
+                                data.cell.styles.textColor = [38, 162, 105];
+                                data.cell.styles.fontStyle = 'bold';
+                            } else {
+                                data.cell.styles.textColor = [229, 165, 10];
+                            }
+                        }
+                    }
+                });
+                
+                yPos = doc.lastAutoTable.finalY + 10;
+                
+                // Espaço entre CPAs
+                yPos += 5;
+            }
+        }
+        
+        // Função para exportar resumo de CPAs para PDF
+        function exportCPADetailsToPDF(doc, data, pageWidth, pageHeight, margin, yPos) {
+            const { cpasOrdenadas, distribuicaoPorDia } = data;
+            
+            // Estatísticas gerais
+            const totalCPAs = cpasOrdenadas.length;
+            const totalLocalidades = cpasOrdenadas.reduce((sum, cpa) => sum + cpa[1].length, 0);
+            const mediaPorCPA = Math.round(totalLocalidades / totalCPAs);
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de CPAs: ${totalCPAs} | Total de Localidades: ${totalLocalidades} | Média: ${mediaPorCPA} localidades/CPA`, margin, yPos);
+            yPos += 10;
+            
+            // Tabela de CPAs
+            const tableData = cpasOrdenadas.map(([cpa, localidades]) => {
+                const comBPM = localidades.filter(l => l.bpmIsValid).length;
+                const semBPM = localidades.length - comBPM;
+                const cobertura = localidades.length > 0 ? Math.round((comBPM / localidades.length) * 100) : 0;
+                
+                // Calcular em quantos dias esta CPA aparece
+                const diasComCPA = new Set();
+                distribuicaoPorDia.forEach((dia, idx) => {
+                    if (dia.some(loc => loc.cpa === cpa)) {
+                        diasComCPA.add(idx);
+                    }
+                });
+                
+                const prioridadeAlta = localidades.filter(l => l.intensityLevel === 'ALTA').length;
+                const prioridadeMedia = localidades.filter(l => l.intensityLevel === 'MEDIA').length;
+                const prioridadeBaixa = localidades.filter(l => l.intensityLevel === 'BAIXA').length;
+                
+                return [
+                    cpa.length > 25 ? cpa.substring(0, 22) + '...' : cpa,
+                    localidades.length.toString(),
+                    comBPM.toString(),
+                    semBPM.toString(),
+                    cobertura + '%',
+                    diasComCPA.size.toString(),
+                    prioridadeAlta.toString(),
+                    prioridadeMedia.toString(),
+                    prioridadeBaixa.toString()
+                ];
+            });
+            
+            doc.autoTable({
+                startY: yPos,
+                head: [['CPA', 'Total', 'Com BPM', 'Sem BPM', '% Cob.', 'Dias', 'ALTA', 'MÉDIA', 'BAIXA']],
+                body: tableData,
+                styles: { 
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak'
+                },
+                headStyles: { 
+                    fillColor: [26, 95, 180],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 15, halign: 'center' },
+                    2: { cellWidth: 15, halign: 'center' },
+                    3: { cellWidth: 15, halign: 'center' },
+                    4: { cellWidth: 15, halign: 'center' },
+                    5: { cellWidth: 15, halign: 'center' },
+                    6: { cellWidth: 15, halign: 'center' },
+                    7: { cellWidth: 15, halign: 'center' },
+                    8: { cellWidth: 15, halign: 'center' }
+                },
+                margin: { left: margin, right: margin },
+                didParseCell: function(data) {
+                    if (data.column.index === 4 && data.section === 'body') {
+                        const value = parseInt(data.cell.raw);
+                        if (value >= 70) {
+                            data.cell.styles.textColor = [38, 162, 105];
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (value >= 40) {
+                            data.cell.styles.textColor = [229, 165, 10];
+                        } else {
+                            data.cell.styles.textColor = [224, 27, 36];
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Função para exportar resumo de municípios para PDF
+        function exportMunicipioDetailsToPDF(doc, data, pageWidth, pageHeight, margin, yPos) {
+            const { municipiosOrdenados } = data;
+            
+            // Estatísticas gerais
+            const totalMunicipios = municipiosOrdenados.length;
+            const totalLocalidades = municipiosOrdenados.reduce((sum, mun) => sum + mun[1].length, 0);
+            const mediaPorMunicipio = Math.round(totalLocalidades / totalMunicipios);
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Municípios: ${totalMunicipios} | Total de Localidades: ${totalLocalidades} | Média: ${mediaPorMunicipio} localidades/município`, margin, yPos);
+            yPos += 10;
+            
+            // Tabela de municípios
+            const tableData = municipiosOrdenados.map(([municipio, localidades]) => {
+                const comBPM = localidades.filter(l => l.bpmIsValid).length;
+                const semBPM = localidades.length - comBPM;
+                const cobertura = localidades.length > 0 ? Math.round((comBPM / localidades.length) * 100) : 0;
+                
+                // Calcular quantas CPAs diferentes atuam neste município
+                const cpas = new Set(localidades.map(l => l.cpa)).size;
+                
+                const prioridadeAlta = localidades.filter(l => l.intensityLevel === 'ALTA').length;
+                const prioridadeMedia = localidades.filter(l => l.intensityLevel === 'MEDIA').length;
+                const prioridadeBaixa = localidades.filter(l => l.intensityLevel === 'BAIXA').length;
+                
+                return [
+                    municipio.length > 25 ? municipio.substring(0, 22) + '...' : municipio,
+                    localidades.length.toString(),
+                    comBPM.toString(),
+                    semBPM.toString(),
+                    cobertura + '%',
+                    cpas.toString(),
+                    prioridadeAlta.toString(),
+                    prioridadeMedia.toString(),
+                    prioridadeBaixa.toString()
+                ];
+            });
+            
+            doc.autoTable({
+                startY: yPos,
+                head: [['Município', 'Total', 'Com BPM', 'Sem BPM', '% Cob.', 'CPAs', 'ALTA', 'MÉDIA', 'BAIXA']],
+                body: tableData,
+                styles: { 
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak'
+                },
+                headStyles: { 
+                    fillColor: [38, 162, 105],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 15, halign: 'center' },
+                    2: { cellWidth: 15, halign: 'center' },
+                    3: { cellWidth: 15, halign: 'center' },
+                    4: { cellWidth: 15, halign: 'center' },
+                    5: { cellWidth: 15, halign: 'center' },
+                    6: { cellWidth: 15, halign: 'center' },
+                    7: { cellWidth: 15, halign: 'center' },
+                    8: { cellWidth: 15, halign: 'center' }
+                },
+                margin: { left: margin, right: margin },
+                didParseCell: function(data) {
+                    if (data.column.index === 4 && data.section === 'body') {
+                        const value = parseInt(data.cell.raw);
+                        if (value >= 70) {
+                            data.cell.styles.textColor = [38, 162, 105];
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (value >= 40) {
+                            data.cell.styles.textColor = [229, 165, 10];
+                        } else {
+                            data.cell.styles.textColor = [224, 27, 36];
+                        }
+                    }
+                }
+            });
         }
 
-        // PDF Generation Functions - PRESERVADA A ESTRUTURA ORIGINAL
-        document.getElementById('exportPdfBtn').addEventListener('click', function() {
-            generatePDF(true);
-        });
-
-        document.getElementById('previewPdfBtn').addEventListener('click', function() {
-            generatePDF(false);
-        });
-
+        // Funções de geração de PDF principal
         function generatePDF(download = true) {
             document.getElementById('loadingPdf').style.display = 'flex';
             
             setTimeout(() => {
                 try {
                     const { jsPDF } = window.jspdf;
-                    // Criar PDF no formato LANDSCAPE (horizontal) para melhor visualizacao em tabelas
                     const doc = new jsPDF('l', 'mm', 'a4');
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
@@ -2065,26 +2702,22 @@
                     let yPos = margin;
                     const today = new Date();
                     
-                    // ============================================
                     // PAGINA 1: CAPA E RESUMO EXECUTIVO
-                    // ============================================
                     
-                    // Header com gradiente simulado
                     doc.setFillColor(26, 95, 180);
                     doc.rect(0, 0, pageWidth, 35, 'F');
                     
-                    // Titulo principal
                     doc.setTextColor(255, 255, 255);
                     doc.setFontSize(22);
                     doc.setFont(undefined, 'bold');
-                    doc.text('OPERACAO BARRICADA ZERO', pageWidth/2, 15, { align: 'center' });
+                    doc.text('OPERAÇÃO BARRICADA ZERO', pageWidth/2, 15, { align: 'center' });
                     
                     doc.setFontSize(14);
                     doc.setFont(undefined, 'normal');
                     doc.text('Planejamento Operacional Otimizado', pageWidth/2, 23, { align: 'center' });
                     
                     doc.setFontSize(10);
-                    doc.text(`Gerado em: ${today.toLocaleDateString('pt-BR')} as ${today.toLocaleTimeString('pt-BR').slice(0,5)}`, pageWidth/2, 30, { align: 'center' });
+                    doc.text(`Gerado em: ${today.toLocaleDateString('pt-BR')} às ${today.toLocaleTimeString('pt-BR').slice(0,5)}`, pageWidth/2, 30, { align: 'center' });
                     
                     yPos = 45;
                     
@@ -2093,7 +2726,6 @@
                         const totalLocalidades = distribuicaoPorDia.flat().length;
                         const localidadesComBPMValido = distribuicaoPorDia.flat().filter(loc => loc.bpmIsValid).length;
                         
-                        // Box de resumo executivo
                         doc.setFillColor(240, 247, 255);
                         doc.roundedRect(margin, yPos, pageWidth - 2*margin, 45, 3, 3, 'F');
                         
@@ -2110,24 +2742,23 @@
                         const col2X = margin + 90;
                         const col3X = margin + 180;
                         
-                        doc.text(`Periodo: ${formatDate(weekdays[0])} a ${formatDate(weekdays[weekdays.length - 1])}`, col1X, yPos + 20);
+                        doc.text(`Período: ${formatDate(weekdays[0])} a ${formatDate(weekdays[weekdays.length - 1])}`, col1X, yPos + 20);
                         doc.text(`Total de Semanas: ${semanas}`, col1X, yPos + 27);
-                        doc.text(`Dias Uteis: ${weekdays.length}`, col1X, yPos + 34);
+                        doc.text(`Dias Úteis: ${weekdays.length}`, col1X, yPos + 34);
                         
                         doc.text(`Total de Localidades: ${totalLocalidades}`, col2X, yPos + 20);
                         doc.text(`Com BPM Validado: ${localidadesComBPMValido} (${Math.round((localidadesComBPMValido/totalLocalidades)*100)}%)`, col2X, yPos + 27);
                         doc.text(`Sem BPM: ${totalLocalidades - localidadesComBPMValido}`, col2X, yPos + 34);
                         
                         doc.text(`CPAs Envolvidas: ${Object.keys(localidadesPorCPA).length}`, col3X, yPos + 20);
-                        doc.text(`Municipios: ${Object.keys(localidadesPorMunicipio).length}`, col3X, yPos + 27);
+                        doc.text(`Municípios: ${Object.keys(localidadesPorMunicipio).length}`, col3X, yPos + 27);
                         
                         yPos = 100;
                         
-                        // Tabela de resumo por CPA
                         doc.setTextColor(26, 95, 180);
                         doc.setFontSize(12);
                         doc.setFont(undefined, 'bold');
-                        doc.text('DISTRIBUICAO POR CPA', margin, yPos);
+                        doc.text('DISTRIBUIÇÃO POR CPA', margin, yPos);
                         yPos += 5;
                         
                         const topCPAs = Object.entries(localidadesPorCPA)
@@ -2162,9 +2793,7 @@
                             margin: { left: margin, right: margin }
                         });
                         
-                        // ============================================
-                        // PAGINAS DE PLANEJAMENTO SEMANAL
-                        // ============================================
+                        // PÁGINAS DE PLANEJAMENTO SEMANAL
                         
                         for (let week = 0; week < semanas; week++) {
                             doc.addPage('l', 'a4');
@@ -2173,7 +2802,6 @@
                             const weekDates = weekdays.slice(weekStart, weekStart + 5);
                             const semanaNum = week + 1;
                             
-                            // Header da pagina
                             doc.setFillColor(26, 95, 180);
                             doc.rect(0, 0, pageWidth, 20, 'F');
                             
@@ -2184,15 +2812,13 @@
                             
                             doc.setFontSize(9);
                             doc.setFont(undefined, 'normal');
-                            doc.text(`Pagina ${doc.internal.getNumberOfPages()} | Operacao Barricada Zero`, pageWidth - margin, 15, { align: 'right' });
+                            doc.text(`Página ${doc.internal.getNumberOfPages()} | Operação Barricada Zero`, pageWidth - margin, 15, { align: 'right' });
                             
                             yPos = 25;
                             
-                            // Criar tabela horizontal com 5 colunas (dias da semana)
                             const diasNomes = ['SEG', 'TER', 'QUA', 'QUI', 'SEX'];
                             const colWidth = (pageWidth - 2*margin) / 5;
                             
-                            // Cabecalho dos dias
                             doc.setFillColor(38, 162, 105);
                             doc.rect(margin, yPos, pageWidth - 2*margin, 12, 'F');
                             
@@ -2209,7 +2835,6 @@
                             
                             yPos += 15;
                             
-                            // Conteudo das colunas - usando a nova distribuição
                             const cpasDaSemana = new Set();
                             for (let d = 0; d < 5; d++) {
                                 const diaGlobalIndex = week * 5 + d;
@@ -2219,33 +2844,25 @@
                                 });
                             }
                             
-                            // Mostrar top CPAs em tabela detalhada
                             const maxCPAsPerPage = 8;
                             const cpasParaMostrar = Array.from(cpasDaSemana)
                                 .sort((a, b) => localidadesPorCPA[b].length - localidadesPorCPA[a].length)
                                 .slice(0, maxCPAsPerPage);
                             
-                            // Preparar dados para autoTable
                             const tableData = [];
                             
                             cpasParaMostrar.forEach(cpa => {
                                 const cpaNome = cpa.length > 25 ? cpa.substring(0, 22) + '...' : cpa;
                                 
-                                // Criar linha com localidades
                                 const row = [cpaNome];
                                 
-                                // Adicionar localidades para cada dia
                                 for (let d = 0; d < 5; d++) {
                                     if (weekDates[d]) {
                                         const diaGlobalIndex = week * 5 + d;
                                         const localidadesDoDia = distribuicaoPorDia[diaGlobalIndex] || [];
                                         const localidadesCPA = localidadesDoDia.filter(loc => loc.cpa === cpa);
                                         
-                                        const locTexts = localidadesCPA.map(loc => {
-                                            const nome = loc.localidadeNome.length > 15 ? loc.localidadeNome.substring(0, 12) + '...' : loc.localidadeNome;
-                                            const bpmStatus = loc.bpmIsValid ? '[OK]' : '[!]';
-                                            return `${nome} ${bpmStatus} ${loc.data.rem}r`;
-                                        });
+                                        const locTexts = localidadesCPA.map(loc => `${loc.localidadeNome} - ${loc.bpm}`);
                                         row.push(locTexts.join('\n') || '-');
                                     } else {
                                         row.push('-');
@@ -2255,7 +2872,6 @@
                                 tableData.push(row);
                             });
                             
-                            // Gerar tabela
                             doc.autoTable({
                                 startY: yPos,
                                 head: [['CPA / Localidades', diasNomes[0], diasNomes[1], diasNomes[2], diasNomes[3], diasNomes[4]]],
@@ -2284,24 +2900,19 @@
                                 margin: { left: margin, right: margin }
                             });
                             
-                            // Legenda na parte inferior
                             const finalY = doc.lastAutoTable.finalY + 5;
                             doc.setFontSize(7);
                             doc.setTextColor(100, 100, 100);
-                            doc.text('[OK] = BPM Validado | [!] = Sem BPM | r = remocoes', margin, finalY);
-                            
+                                                        
                             if (cpasDaSemana.size > maxCPAsPerPage) {
-                                doc.text(`+ ${cpasDaSemana.size - maxCPAsPerPage} CPAs adicionais nao exibidas`, margin, finalY + 4);
+                                doc.text(`+ ${cpasDaSemana.size - maxCPAsPerPage} CPAs adicionais não exibidas`, margin, finalY + 4);
                             }
                         }
                         
-                        // ============================================
-                        // PAGINA FINAL: LISTA COMPLETA DE LOCALIDADES
-                        // ============================================
+                        // PÁGINA FINAL: LISTA COMPLETA DE LOCALIDADES
                         
                         doc.addPage('l', 'a4');
                         
-                        // Header
                         doc.setFillColor(26, 95, 180);
                         doc.rect(0, 0, pageWidth, 20, 'F');
                         
@@ -2312,25 +2923,24 @@
                         
                         yPos = 25;
                         
-                        // Preparar dados de todas localidades
                         const allLocsData = distribuicaoPorDia.flat()
                             .sort((a, b) => b.data.rem - a.data.rem)
                             .slice(0, 50)
                             .map((loc, idx) => [
                                 idx + 1,
-                                loc.localidadeNome.length > 25 ? loc.localidadeNome.substring(0, 22) + '...' : loc.localidadeNome,
-                                loc.municipio.length > 20 ? loc.municipio.substring(0, 17) + '...' : loc.municipio,
-                                loc.cpa.length > 20 ? loc.cpa.substring(0, 17) + '...' : loc.cpa,
-                                loc.bpmIsValid ? loc.bpm.substring(0, 15) : 'N/I',
+                                loc.localidadeNome,
+                                loc.municipio,
+                                loc.cpa,
+                                loc.bpmIsValid ? loc.bpm : 'N/I',
                                 loc.data.rem,
                                 loc.data.peso.toFixed(1),
                                 loc.intensityLevel,
-                                loc.bpmIsValid ? 'SIM' : 'NAO'
+                                loc.bpmIsValid ? 'SIM' : 'NÃO'
                             ]);
                         
                         doc.autoTable({
                             startY: yPos,
-                            head: [['#', 'Localidade', 'Municipio', 'CPA', 'BPM', 'Rem', 'Peso', 'Intens.', 'Valid']],
+                            head: [['#', 'Localidade', 'Município', 'CPA', 'BPM', 'Rem', 'Peso', 'Intens.', 'Valid']],
                             body: allLocsData,
                             styles: { 
                                 fontSize: 7,
@@ -2355,7 +2965,6 @@
                             alternateRowStyles: { fillColor: [248, 249, 250] },
                             margin: { left: margin, right: margin },
                             didParseCell: function(data) {
-                                // Colorir celulas de intensidade
                                 if (data.column.index === 7 && data.section === 'body') {
                                     if (data.cell.raw === 'ALTA') {
                                         data.cell.styles.textColor = [224, 27, 36];
@@ -2364,7 +2973,6 @@
                                         data.cell.styles.textColor = [229, 165, 10];
                                     }
                                 }
-                                // Colorir celulas de validacao
                                 if (data.column.index === 8 && data.section === 'body') {
                                     if (data.cell.raw === 'SIM') {
                                         data.cell.styles.textColor = [38, 162, 105];
@@ -2376,26 +2984,23 @@
                             }
                         });
                         
-                        // Nota de rodape
                         const finalY2 = doc.lastAutoTable.finalY + 5;
                         doc.setFontSize(7);
                         doc.setTextColor(100, 100, 100);
-                        doc.text(`Exibindo as ${Math.min(50, distribuicaoPorDia.flat().length)} localidades com maior numero de remocoes.`, margin, finalY2);
+                        doc.text(`Exibindo as ${Math.min(50, distribuicaoPorDia.flat().length)} localidades com maior número de remoções.`, margin, finalY2);
                         if (distribuicaoPorDia.flat().length > 50) {
                             doc.text(`Total de ${distribuicaoPorDia.flat().length} localidades no planejamento.`, margin, finalY2 + 4);
                         }
                     }
                     
-                    // Footer em todas as paginas
                     const totalPages = doc.internal.getNumberOfPages();
                     for (let i = 1; i <= totalPages; i++) {
                         doc.setPage(i);
                         doc.setFontSize(7);
                         doc.setTextColor(150, 150, 150);
-                        doc.text(`Pagina ${i} de ${totalPages}`, pageWidth/2, pageHeight - 5, { align: 'center' });
+                        doc.text(`Página ${i} de ${totalPages}`, pageWidth/2, pageHeight - 5, { align: 'center' });
                     }
                     
-                    // Salvar ou visualizar
                     if (download) {
                         const fileName = `Planejamento_Barricada_Zero_${today.toISOString().slice(0,10)}.pdf`;
                         doc.save(fileName);
