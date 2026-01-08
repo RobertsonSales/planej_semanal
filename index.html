@@ -637,6 +637,11 @@
             align-items: center;
             flex-direction: column;
         }
+        
+        /* Classe para ocultar elementos */
+        .btn-hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -793,6 +798,14 @@
         let currentModalType = null;
         let currentModalData = null;
 
+        // Função para ocultar o botão de análise
+        function hideAnalyzeButton() {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (analyzeBtn) {
+                analyzeBtn.classList.add('btn-hidden');
+            }
+        }
+
         // Configurar event listeners quando o DOM estiver carregado
         document.addEventListener('DOMContentLoaded', function() {
             // Event listeners para elementos estáticos
@@ -811,13 +824,30 @@
                     alert('Por favor, selecione um arquivo Excel.');
                     return;
                 }
+                
+                // Desabilitar o botão durante a análise
+                this.disabled = true;
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i> Analisando...';
+                
                 const file = fileInput.files[0];
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const data = e.target.result;
                     const workbook = XLSX.read(data, { type: 'array' });
                     processWorkbook(workbook);
+                    
+                    // Restaurar estado do botão
+                    document.getElementById('analyzeBtn').innerHTML = originalText;
+                    document.getElementById('analyzeBtn').disabled = false;
                 };
+                
+                reader.onerror = function() {
+                    alert('Erro ao ler o arquivo.');
+                    document.getElementById('analyzeBtn').innerHTML = originalText;
+                    document.getElementById('analyzeBtn').disabled = false;
+                };
+                
                 reader.readAsArrayBuffer(file);
             });
 
@@ -1069,341 +1099,351 @@
 
         // Processar arquivo Excel
         function processWorkbook(workbook) {
-            // 1. Processar a aba CPA x BTL
-            const cpaBtlSheet = workbook.Sheets['CPA x BTL'];
-            if (cpaBtlSheet) {
-                const cpaBtlData = XLSX.utils.sheet_to_json(cpaBtlSheet, { 
-                    header: 1,
-                    defval: ''
+            try {
+                // 1. Processar a aba CPA x BTL
+                const cpaBtlSheet = workbook.Sheets['CPA x BTL'];
+                if (cpaBtlSheet) {
+                    const cpaBtlData = XLSX.utils.sheet_to_json(cpaBtlSheet, { 
+                        header: 1,
+                        defval: ''
+                    });
+                    
+                    allData.bpmValidationData = {};
+                    
+                    let bpmColumnIndex = -1;
+                    let areasAtuacaoColumnIndex = -1;
+                    
+                    if (cpaBtlData.length > 0) {
+                        const headerRow = cpaBtlData[0];
+                        
+                        for (let i = 0; i < headerRow.length; i++) {
+                            const cellValue = headerRow[i].toString().toLowerCase();
+                            if (cellValue.includes('bpm') || cellValue.includes('batalhao') || cellValue.includes('batalhão')) {
+                                bpmColumnIndex = i;
+                            }
+                            if (cellValue.includes('município') || cellValue.includes('municipio') || 
+                                cellValue.includes('atuacao') || cellValue.includes('atuação') ||
+                                cellValue.includes('bairro') || cellValue.includes('localidade') ||
+                                cellValue.includes('area') || cellValue.includes('área')) {
+                                areasAtuacaoColumnIndex = i;
+                            }
+                        }
+                        
+                        if (bpmColumnIndex !== -1 && areasAtuacaoColumnIndex !== -1) {
+                            for (let row = 1; row < cpaBtlData.length; row++) {
+                                const bpmName = cpaBtlData[row][bpmColumnIndex];
+                                const areasAtuacao = cpaBtlData[row][areasAtuacaoColumnIndex];
+                                
+                                if (bpmName && areasAtuacao) {
+                                    const normalizedBPM = normalizeText(bpmName);
+                                    
+                                    if (!allData.bpmValidationData[normalizedBPM]) {
+                                        allData.bpmValidationData[normalizedBPM] = {
+                                            originalName: bpmName,
+                                            areas: new Set()
+                                        };
+                                    }
+                                    
+                                    const areasList = areasAtuacao.toString()
+                                        .split(/[,;]/)
+                                        .map(area => normalizeText(area.trim()))
+                                        .filter(area => area.length > 0);
+                                    
+                                    areasList.forEach(area => {
+                                        allData.bpmValidationData[normalizedBPM].areas.add(area);
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. Processar a aba GLOBAL
+                const globalSheet = workbook.Sheets['GLOBAL'];
+                if (!globalSheet) {
+                    alert('Aba GLOBAL não encontrada.');
+                    throw new Error('Aba GLOBAL não encontrada');
+                }
+
+                const globalData = XLSX.utils.sheet_to_json(globalSheet, { 
+                    header: ['DATA', 'AREA', 'MUNICIPIO', 'BAIRRO', 'LOCALIDADE', 'REMOCOES', 'VIAS', 'PESO_TON', 'CPA', 'CMTE', 'BPM'], 
+                    skipHeader: true 
                 });
                 
-                allData.bpmValidationData = {};
-                
-                let bpmColumnIndex = -1;
-                let areasAtuacaoColumnIndex = -1;
-                
-                if (cpaBtlData.length > 0) {
-                    const headerRow = cpaBtlData[0];
-                    
-                    for (let i = 0; i < headerRow.length; i++) {
-                        const cellValue = headerRow[i].toString().toLowerCase();
-                        if (cellValue.includes('bpm') || cellValue.includes('batalhao') || cellValue.includes('batalhão')) {
-                            bpmColumnIndex = i;
+                allData.filteredData = globalData.filter(row => row.DATA && row.REMOCOES > 0);
+
+                allData.filteredData.forEach(row => {
+                    try {
+                        if (typeof row.DATA === 'number') {
+                            row.DATA = excelDateToJSDateSimple(row.DATA);
+                        } else if (row.DATA instanceof Date) {
+                            // Já é uma data
+                        } else {
+                            row.DATA = new Date(row.DATA);
                         }
-                        if (cellValue.includes('município') || cellValue.includes('municipio') || 
-                            cellValue.includes('atuacao') || cellValue.includes('atuação') ||
-                            cellValue.includes('bairro') || cellValue.includes('localidade') ||
-                            cellValue.includes('area') || cellValue.includes('área')) {
-                            areasAtuacaoColumnIndex = i;
+                        
+                        if (!(row.DATA instanceof Date) || isNaN(row.DATA.getTime())) {
+                            row.DATA = new Date();
                         }
+                        
+                        row.FORMATTED_DATA = formatDate(row.DATA);
+                        row.REMOCOES = parseFloat(row.REMOCOES) || 0;
+                        row.VIAS = parseFloat(row.VIAS) || 0;
+                        row.PESO_TON = parseFloat(row.PESO_TON) || 0;
+                        row.CPA = row.CPA || 'Não informado';
+                        row.BPM = row.BPM || 'Não informado';
+                        
+                        row.LOCALIDADE_ID = row.LOCALIDADE || row.BAIRRO || 'Área não especificada';
+                        row.LOCALIDADE_FULL = `${row.MUNICIPIO || 'Desconhecido'} / ${row.LOCALIDADE_ID}`;
+                        
+                        row.NORMALIZED_LOCALIDADE = normalizeText(row.LOCALIDADE_ID);
+                        row.NORMALIZED_BAIRRO = normalizeText(row.BAIRRO);
+                        row.NORMALIZED_MUNICIPIO = normalizeText(row.MUNICIPIO);
+                        row.NORMALIZED_BPM = normalizeText(row.BPM);
+                    } catch (error) {
+                        console.error('Erro ao processar linha:', error);
+                    }
+                });
+
+                // Calcula a data máxima
+                allData.maxDate = allData.filteredData.reduce((max, row) => row.DATA > max ? row.DATA : max, new Date(0));
+
+                // Agrupa por localidade e município, mantendo o mais recente
+                allData.filteredData.forEach(row => {
+                    const locKey = row.NORMALIZED_LOCALIDADE + '_' + row.NORMALIZED_MUNICIPIO;
+                    if (!allData.recentByLocalidade[locKey] || row.DATA > allData.recentByLocalidade[locKey].DATA) {
+                        allData.recentByLocalidade[locKey] = row;
                     }
                     
-                    if (bpmColumnIndex !== -1 && areasAtuacaoColumnIndex !== -1) {
-                        for (let row = 1; row < cpaBtlData.length; row++) {
-                            const bpmName = cpaBtlData[row][bpmColumnIndex];
-                            const areasAtuacao = cpaBtlData[row][areasAtuacaoColumnIndex];
-                            
-                            if (bpmName && areasAtuacao) {
-                                const normalizedBPM = normalizeText(bpmName);
-                                
-                                if (!allData.bpmValidationData[normalizedBPM]) {
-                                    allData.bpmValidationData[normalizedBPM] = {
-                                        originalName: bpmName,
-                                        areas: new Set()
-                                    };
-                                }
-                                
-                                const areasList = areasAtuacao.toString()
-                                    .split(/[,;]/)
-                                    .map(area => normalizeText(area.trim()))
-                                    .filter(area => area.length > 0);
-                                
-                                areasList.forEach(area => {
-                                    allData.bpmValidationData[normalizedBPM].areas.add(area);
-                                });
-                            }
-                        }
+                    const munKey = row.NORMALIZED_MUNICIPIO;
+                    if (!allData.recentByMunicipio[munKey] || row.DATA > allData.recentByMunicipio[munKey].DATA) {
+                        allData.recentByMunicipio[munKey] = row;
                     }
-                }
-            }
 
-            // 2. Processar a aba GLOBAL
-            const globalSheet = workbook.Sheets['GLOBAL'];
-            if (!globalSheet) {
-                alert('Aba GLOBAL não encontrada.');
-                return;
-            }
+                    allData.totalRem += row.REMOCOES;
+                    allData.totalVias += row.VIAS;
+                    allData.totalPeso += row.PESO_TON;
+                });
 
-            const globalData = XLSX.utils.sheet_to_json(globalSheet, { 
-                header: ['DATA', 'AREA', 'MUNICIPIO', 'BAIRRO', 'LOCALIDADE', 'REMOCOES', 'VIAS', 'PESO_TON', 'CPA', 'CMTE', 'BPM'], 
-                skipHeader: true 
-            });
-            
-            allData.filteredData = globalData.filter(row => row.DATA && row.REMOCOES > 0);
+                allData.avgPesoPerRem = allData.totalRem > 0 ? allData.totalPeso / allData.totalRem : 0;
 
-            allData.filteredData.forEach(row => {
-                try {
-                    if (typeof row.DATA === 'number') {
-                        row.DATA = excelDateToJSDateSimple(row.DATA);
-                    } else if (row.DATA instanceof Date) {
-                        // Já é uma data
-                    } else {
-                        row.DATA = new Date(row.DATA);
-                    }
-                    
-                    if (!(row.DATA instanceof Date) || isNaN(row.DATA.getTime())) {
-                        row.DATA = new Date();
-                    }
-                    
-                    row.FORMATTED_DATA = formatDate(row.DATA);
-                    row.REMOCOES = parseFloat(row.REMOCOES) || 0;
-                    row.VIAS = parseFloat(row.VIAS) || 0;
-                    row.PESO_TON = parseFloat(row.PESO_TON) || 0;
-                    row.CPA = row.CPA || 'Não informado';
-                    row.BPM = row.BPM || 'Não informado';
-                    
-                    row.LOCALIDADE_ID = row.LOCALIDADE || row.BAIRRO || 'Área não especificada';
-                    row.LOCALIDADE_FULL = `${row.MUNICIPIO || 'Desconhecido'} / ${row.LOCALIDADE_ID}`;
-                    
-                    row.NORMALIZED_LOCALIDADE = normalizeText(row.LOCALIDADE_ID);
-                    row.NORMALIZED_BAIRRO = normalizeText(row.BAIRRO);
-                    row.NORMALIZED_MUNICIPIO = normalizeText(row.MUNICIPIO);
-                    row.NORMALIZED_BPM = normalizeText(row.BPM);
-                } catch (error) {
-                    console.error('Erro ao processar linha:', error);
-                }
-            });
+                // Ordena localidades e municípios
+                allData.sortedLocalidades = Object.values(allData.recentByLocalidade).sort((a, b) => b.REMOCOES - a.REMOCOES);
+                allData.sortedMunicipios = Object.values(allData.recentByMunicipio).sort((a, b) => b.REMOCOES - a.REMOCOES);
 
-            // Calcula a data máxima
-            allData.maxDate = allData.filteredData.reduce((max, row) => row.DATA > max ? row.DATA : max, new Date(0));
+                // Gera insights avançados
+                const advancedInsights = generateAdvancedInsights(allData);
+                allData.advancedInsights = advancedInsights;
 
-            // Agrupa por localidade e município, mantendo o mais recente
-            allData.filteredData.forEach(row => {
-                const locKey = row.NORMALIZED_LOCALIDADE + '_' + row.NORMALIZED_MUNICIPIO;
-                if (!allData.recentByLocalidade[locKey] || row.DATA > allData.recentByLocalidade[locKey].DATA) {
-                    allData.recentByLocalidade[locKey] = row;
-                }
-                
-                const munKey = row.NORMALIZED_MUNICIPIO;
-                if (!allData.recentByMunicipio[munKey] || row.DATA > allData.recentByMunicipio[munKey].DATA) {
-                    allData.recentByMunicipio[munKey] = row;
-                }
-
-                allData.totalRem += row.REMOCOES;
-                allData.totalVias += row.VIAS;
-                allData.totalPeso += row.PESO_TON;
-            });
-
-            allData.avgPesoPerRem = allData.totalRem > 0 ? allData.totalPeso / allData.totalRem : 0;
-
-            // Ordena localidades e municípios
-            allData.sortedLocalidades = Object.values(allData.recentByLocalidade).sort((a, b) => b.REMOCOES - a.REMOCOES);
-            allData.sortedMunicipios = Object.values(allData.recentByMunicipio).sort((a, b) => b.REMOCOES - a.REMOCOES);
-
-            // Gera insights avançados
-            const advancedInsights = generateAdvancedInsights(allData);
-            allData.advancedInsights = advancedInsights;
-
-            // Exibe análise
-            let analysisHtml = `
-                <div class="col-md-3">
-                    <div class="stat-card priority-high">
-                        <div class="stat-value">${allData.totalRem}</div>
-                        <div class="stat-label">Remoções Totais</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card priority-medium">
-                        <div class="stat-value">${allData.totalVias}</div>
-                        <div class="stat-label">Vias Liberadas</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card priority-low">
-                        <div class="stat-value">${allData.totalPeso.toFixed(1)} ton</div>
-                        <div class="stat-label">Peso Total</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <div class="stat-value">${allData.avgPesoPerRem.toFixed(2)} ton</div>
-                        <div class="stat-label">Média Peso/Rem</div>
-                    </div>
-                </div>
-                <div class="col-12 mt-4">
-                    <div class="card card-custom">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-building"></i> Top 10 Municípios</h5>
+                // Exibe análise
+                let analysisHtml = `
+                    <div class="col-md-3">
+                        <div class="stat-card priority-high">
+                            <div class="stat-value">${allData.totalRem}</div>
+                            <div class="stat-label">Remoções Totais</div>
                         </div>
-                        <div class="card-body p-0">
-                            <table class="table table-custom m-0">
-                                <thead>
-                                    <tr>
-                                        <th>Município</th>
-                                        <th>Remoções</th>
-                                        <th>Vias</th>
-                                        <th>Peso (ton)</th>
-                                        <th>Última Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${allData.sortedMunicipios.slice(0, 10).map(mun => `
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card priority-medium">
+                            <div class="stat-value">${allData.totalVias}</div>
+                            <div class="stat-label">Vias Liberadas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card priority-low">
+                            <div class="stat-value">${allData.totalPeso.toFixed(1)} ton</div>
+                            <div class="stat-label">Peso Total</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-value">${allData.avgPesoPerRem.toFixed(2)} ton</div>
+                            <div class="stat-label">Média Peso/Rem</div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <div class="card card-custom">
+                            <div class="card-header card-header-custom">
+                                <h5 class="mb-0"><i class="bi bi-building"></i> Top 10 Municípios</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-custom m-0">
+                                    <thead>
                                         <tr>
-                                            <td>${mun.MUNICIPIO}</td>
-                                            <td>${mun.REMOCOES}</td>
-                                            <td>${mun.VIAS}</td>
-                                            <td>${mun.PESO_TON.toFixed(1)}</td>
-                                            <td>${mun.FORMATTED_DATA}</td>
+                                            <th>Município</th>
+                                            <th>Remoções</th>
+                                            <th>Vias</th>
+                                            <th>Peso (ton)</th>
+                                            <th>Última Data</th>
                                         </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        ${allData.sortedMunicipios.slice(0, 10).map(mun => `
+                                            <tr>
+                                                <td>${mun.MUNICIPIO}</td>
+                                                <td>${mun.REMOCOES}</td>
+                                                <td>${mun.VIAS}</td>
+                                                <td>${mun.PESO_TON.toFixed(1)}</td>
+                                                <td>${mun.FORMATTED_DATA}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-12 mt-4">
-                    <div class="card card-custom">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-map"></i> Top 10 Localidades</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-custom m-0">
-                                <thead>
-                                    <tr>
-                                        <th>Localidade</th>
-                                        <th>Município</th>
-                                        <th>Remoções</th>
-                                        <th>Vias</th>
-                                        <th>Peso (ton)</th>
-                                        <th>Última Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${allData.sortedLocalidades.slice(0, 10).map(loc => `
+                    <div class="col-12 mt-4">
+                        <div class="card card-custom">
+                            <div class="card-header card-header-custom">
+                                <h5 class="mb-0"><i class="bi bi-map"></i> Top 10 Localidades</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-custom m-0">
+                                    <thead>
                                         <tr>
-                                            <td>${loc.LOCALIDADE_ID}</td>
-                                            <td>${loc.MUNICIPIO}</td>
-                                            <td>${loc.REMOCOES}</td>
-                                            <td>${loc.VIAS}</td>
-                                            <td>${loc.PESO_TON.toFixed(1)}</td>
-                                            <td>${loc.FORMATTED_DATA}</td>
+                                            <th>Localidade</th>
+                                            <th>Município</th>
+                                            <th>Remoções</th>
+                                            <th>Vias</th>
+                                            <th>Peso (ton)</th>
+                                            <th>Última Data</th>
                                         </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        ${allData.sortedLocalidades.slice(0, 10).map(loc => `
+                                            <tr>
+                                                <td>${loc.LOCALIDADE_ID}</td>
+                                                <td>${loc.MUNICIPIO}</td>
+                                                <td>${loc.REMOCOES}</td>
+                                                <td>${loc.VIAS}</td>
+                                                <td>${loc.PESO_TON.toFixed(1)}</td>
+                                                <td>${loc.FORMATTED_DATA}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-12 mt-4">
-                    <div class="card insight-card card-custom">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Insights Principais - Análise Preditiva e Prescritiva</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="insights-container">
-                                ${advancedInsights.map((insight, index) => `
-                                    <div class="insight-item ${insight.type}">
-                                        <div class="insight-title">
-                                            <i class="bi ${insight.icon} insight-icon"></i>
-                                            ${insight.title}
+                    <div class="col-12 mt-4">
+                        <div class="card insight-card card-custom">
+                            <div class="card-header card-header-custom">
+                                <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Insights Principais - Análise Preditiva e Prescriptiva</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="insights-container">
+                                    ${advancedInsights.map((insight, index) => `
+                                        <div class="insight-item ${insight.type}">
+                                            <div class="insight-title">
+                                                <i class="bi ${insight.icon} insight-icon"></i>
+                                                ${insight.title}
+                                            </div>
+                                            <div class="insight-desc">${insight.description}</div>
                                         </div>
-                                        <div class="insight-desc">${insight.description}</div>
-                                    </div>
-                                `).join('')}
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            document.getElementById('analysis').innerHTML = analysisHtml;
+                `;
+                document.getElementById('analysis').innerHTML = analysisHtml;
 
-            // Gera gráficos
-            let chartsHtml = `
-                <div class="col-md-6">
-                    <div class="card card-custom">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Remoções por Município</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="municipioChart"></canvas>
+                // Gera gráficos
+                let chartsHtml = `
+                    <div class="col-md-6">
+                        <div class="card card-custom">
+                            <div class="card-header card-header-custom">
+                                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Remoções por Município</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="municipioChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card card-custom">
-                        <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribuição por Área</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container-pie">
-                                <canvas id="areaChart"></canvas>
+                    <div class="col-md-6">
+                        <div class="card card-custom">
+                            <div class="card-header card-header-custom">
+                                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribuição por Área</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container-pie">
+                                    <canvas id="areaChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            document.getElementById('charts').innerHTML = chartsHtml;
+                `;
+                document.getElementById('charts').innerHTML = chartsHtml;
 
-            // Dados para gráficos
-            const municipioLabels = allData.sortedMunicipios.slice(0, 10).map(m => m.MUNICIPIO);
-            const municipioData = allData.sortedMunicipios.slice(0, 10).map(m => m.REMOCOES);
+                // Dados para gráficos
+                const municipioLabels = allData.sortedMunicipios.slice(0, 10).map(m => m.MUNICIPIO);
+                const municipioData = allData.sortedMunicipios.slice(0, 10).map(m => m.REMOCOES);
 
-            const ctxMun = document.getElementById('municipioChart').getContext('2d');
-            new Chart(ctxMun, {
-                type: 'bar',
-                data: {
-                    labels: municipioLabels,
-                    datasets: [{
-                        label: 'Remoções',
-                        data: municipioData,
-                        backgroundColor: 'rgba(26, 95, 180, 0.6)',
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
+                const ctxMun = document.getElementById('municipioChart').getContext('2d');
+                new Chart(ctxMun, {
+                    type: 'bar',
+                    data: {
+                        labels: municipioLabels,
+                        datasets: [{
+                            label: 'Remoções',
+                            data: municipioData,
+                            backgroundColor: 'rgba(26, 95, 180, 0.6)',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
                     }
-                }
-            });
+                });
 
-            const areaCounts = {};
-            allData.filteredData.forEach(row => {
-                areaCounts[row.AREA] = (areaCounts[row.AREA] || 0) + row.REMOCOES;
-            });
-            const areaLabels = Object.keys(areaCounts);
-            const areaData = Object.values(areaCounts);
+                const areaCounts = {};
+                allData.filteredData.forEach(row => {
+                    areaCounts[row.AREA] = (areaCounts[row.AREA] || 0) + row.REMOCOES;
+                });
+                const areaLabels = Object.keys(areaCounts);
+                const areaData = Object.values(areaCounts);
 
-            const ctxArea = document.getElementById('areaChart').getContext('2d');
-            new Chart(ctxArea, {
-                type: 'pie',
-                data: {
-                    labels: areaLabels,
-                    datasets: [{
-                        data: areaData,
-                        backgroundColor: ['#1a5fb4', '#26a269', '#e5a50a', '#e01b24', '#666', '#8a2be2', '#ff69b4', '#20b2aa']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                boxWidth: 12,
-                                padding: 15
+                const ctxArea = document.getElementById('areaChart').getContext('2d');
+                new Chart(ctxArea, {
+                    type: 'pie',
+                    data: {
+                        labels: areaLabels,
+                        datasets: [{
+                            data: areaData,
+                            backgroundColor: ['#1a5fb4', '#26a269', '#e5a50a', '#e01b24', '#666', '#8a2be2', '#ff69b4', '#20b2aa']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 15
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
 
-            document.getElementById('planningSection').style.display = 'block';
-            document.getElementById('pdfSection').style.display = 'block';
+                document.getElementById('planningSection').style.display = 'block';
+                document.getElementById('pdfSection').style.display = 'block';
+                
+                // OCULTAR O BOTÃO "ANALISAR DADOS" APÓS ANÁLISE BEM-SUCEDIDA
+                hideAnalyzeButton();
+                
+            } catch (error) {
+                console.error('Erro ao processar workbook:', error);
+                alert('Erro ao processar dados: ' + error.message);
+                throw error;
+            }
         }
 
         // Gerar planejamento
