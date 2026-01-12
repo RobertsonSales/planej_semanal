@@ -899,28 +899,49 @@
         });
 
         // Funções auxiliares
+        // FUNÇÃO CORRIGIDA: Converter data do Excel para JavaScript (corrigido problema de fuso horário)
         function excelDateToJSDateSimple(serial) {
-            const excelEpoch = new Date(1899, 11, 30);
-            const days = Math.floor(serial);
-            
+            // Excel usa uma base de 31/12/1899 (mas na verdade é 30/12/1899)
+            // Ajuste para o bug do Excel (trata 1900 como ano bissexto)
+            let adjustedSerial = serial;
             if (serial >= 60) {
-                serial -= 1;
+                adjustedSerial = serial + 0.5;
             }
             
-            const ms = Math.round(serial * 86400000);
-            const date = new Date(excelEpoch.getTime() + ms);
+            // Cálculo direto sem problemas de fuso horário
+            // Excel: 0 = 00/01/1900, 1 = 01/01/1900, etc.
+            // JavaScript: 0 = 01/01/1970
+            const excelEpoch = new Date(1899, 11, 30); // 30/12/1899
+            const msPerDay = 86400000;
             
-            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            // Cria a data corretamente
+            const date = new Date(excelEpoch.getTime() + (adjustedSerial * msPerDay));
+            
+            // Ajuste para compensar qualquer diferença de fuso horário
+            // Forçamos a data para o meio-dia local para evitar problemas
+            date.setHours(12, 0, 0, 0);
+            
+            return date;
         }
 
         function formatDate(date) {
             if (!(date instanceof Date) || isNaN(date)) return 'Data inválida';
-            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            // Formata a data local sem problemas de fuso horário
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${day}/${month}/${year}`;
         }
 
         function formatDateShort(date) {
             if (!(date instanceof Date) || isNaN(date)) return '--/--';
-            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            
+            return `${day}/${month}`;
         }
 
         function isWeekday(date) {
@@ -1174,16 +1195,32 @@
 
                 allData.filteredData.forEach(row => {
                     try {
+                        // CORREÇÃO PRINCIPAL: Processamento de datas corrigido
                         if (typeof row.DATA === 'number') {
+                            // Se for número do Excel, converte
                             row.DATA = excelDateToJSDateSimple(row.DATA);
                         } else if (row.DATA instanceof Date) {
-                            // Já é uma data
+                            // Já é uma data, garante que está no fuso correto
+                            row.DATA.setHours(12, 0, 0, 0);
                         } else {
-                            row.DATA = new Date(row.DATA);
+                            // Tenta parsear como string
+                            const parsedDate = new Date(row.DATA);
+                            if (!isNaN(parsedDate)) {
+                                parsedDate.setHours(12, 0, 0, 0);
+                                row.DATA = parsedDate;
+                            } else {
+                                // Data padrão se não conseguir parsear
+                                const today = new Date();
+                                today.setHours(12, 0, 0, 0);
+                                row.DATA = today;
+                            }
                         }
                         
+                        // Garante que é uma data válida
                         if (!(row.DATA instanceof Date) || isNaN(row.DATA.getTime())) {
-                            row.DATA = new Date();
+                            const today = new Date();
+                            today.setHours(12, 0, 0, 0);
+                            row.DATA = today;
                         }
                         
                         row.FORMATTED_DATA = formatDate(row.DATA);
@@ -2943,7 +2980,7 @@
                             const finalY = doc.lastAutoTable.finalY + 5;
                             doc.setFontSize(7);
                             doc.setTextColor(100, 100, 100);
-                                                        
+                                                            
                             if (cpasDaSemana.size > maxCPAsPerPage) {
                                 doc.text(`+ ${cpasDaSemana.size - maxCPAsPerPage} CPAs adicionais não exibidas`, margin, finalY + 4);
                             }
